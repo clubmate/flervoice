@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
-const channelRoutes = require('./routes/channelRoutes');
+const videoRoutes = require('./routes/videoRoutes');
 
 // INIT APP
 const app = express();
@@ -9,7 +9,7 @@ app.use(express.json());
 
 // INIT ROUTES
 app.use(express.static(__dirname + '/views'));
-app.use('/api/playlist', playlistRoutes)
+app.use('/api/video', videoRoutes)
 
 // INIT SERVER
 app.listen(3000, 'localhost', () => {
