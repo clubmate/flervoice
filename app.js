@@ -11,9 +11,9 @@ app.use(express.json());
 app.use(express.static(__dirname + '/views'));
 app.use('/api/video', videoRoutes)
 
-// INIT SERVER
-app.listen(3000, 'localhost', () => {
-    logger.info('server started.')
+// INIT SERVERs
+app.listen(3001, 'localhost', () => {
+    console.log('server started.')
 })
 
 // INIT DATABASE
@@ -21,9 +21,9 @@ mongoose.connect('mongodb://127.0.0.1:27017/flersucker');
 const database = mongoose.connection
 
 database.on('error', (error) => {
-    logger.error(error)
+    console.log(error)
 })
 
 database.once('connected', () => {
-    logger.info('database connected.');
+    console.log('database connected.');
 })

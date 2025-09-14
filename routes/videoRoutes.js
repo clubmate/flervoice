@@ -14,7 +14,7 @@ router.get('/find', async (req, res) => {
     res.json(videoData)
   }
   catch (error) {
-    logger.error(`Error in /video/find: ${error.message}`);
+    console.log(`Error in /video/find: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 });
