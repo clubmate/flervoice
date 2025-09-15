@@ -2,8 +2,48 @@
 <html>
 <head>
   <title>FLER</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body>
+
+<header>
+  <button>SIDEBAR AUFKLAPPEN</button>
+  <input type="text" placeholder="SEARCH">
+  <button>UPLOAD</button>
+</header>
+
+<content>
+<aside>
+  <h4><i class="bi bi-film"></i> VIDEOS</h4>
+  <section class="videos">
+    <a href="#"><div class="video-title">FLER ÜBER RAPPERNAMEN...</div><div class="video-subtitle">23.05.2024 &bull; HIPHOP.DE</div></a>
+    <a href="#"><div class="video-title">FLER ÜBER RAPPERNAMEN...</div><div class="video-subtitle">23.05.2024 &bull; HIPHOP.DE</div></a>
+    <a href="#"><div class="video-title">FLER ÜBER RAPPERNAMEN...</div><div class="video-subtitle">23.05.2024 &bull; HIPHOP.DE</div></a>
+  </section>
+  <h4><i class="bi bi-tags"></i> TAGS</h4>
+  <section class="tags">
+    <a href="#"><span class="tag-title">INTRO</span><span class="pill">3</span></a>
+    <a href="#"><span class="tag-title">BERLIN</span><span class="pill">22</span></a>
+    <a href="#"><span class="tag-title">ABOU-CHAKER</span><span class="pill">4</span></a>
+  </section>
+</aside>
+
+<main>
+  <div class="video-player">
+    <video controls>
+      <source src="sample-video.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <div class="video-transcript">
+    <section>
+      <div class="tags"><span class="pill">tags</span><span class="pill">tags</span><span class="pill">tags</span></div>
+      <div class="text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div>
+    </section>
+  </div>
+</main>
+</content>
 
 <script src="backend.js"></script>
 

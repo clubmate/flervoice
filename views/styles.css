@@ -1,0 +1,107 @@
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
+  color: #ffffff;
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #171717;
+  padding: 10px;
+  border-bottom: 1px solid #2f2f2f;
+}
+
+content {
+  display: flex;
+  flex: 1;
+}
+
+aside {
+  flex: 1;
+  height: 100%;
+  background-color: #171717;
+  border-right: 1px solid #2f2f2f;
+}
+
+aside h4 {
+  color: #858585;
+  margin: 0px;
+  padding: 15px;
+  padding-bottom: 10px;
+}
+
+aside section {
+  display: flex;
+  flex-direction: column;
+}
+
+aside .videos a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 15px;
+}
+
+aside .tags a {
+  display: flex;
+  gap: 2px;
+  color: #fff;
+  text-decoration: none;
+  padding: 5px 15px;
+}
+
+aside a:hover {
+  background-color: #2f2f2f;
+}
+
+aside .video-subtitle {
+  color: #858585;
+  font-size: 14px;
+}
+
+aside .tag-title {
+  flex: 1;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.pill {
+  background-color: #007bff;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+}
+
+main {
+  display: flex;
+  flex: 5;
+  padding: 40px;
+  gap: 40px;
+}
+
+.video-transcript section {
+  display: flex;
+  gap: 20px;
+}
+
+.video-transcript .tags {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.video-transcript .text {
+  margin-top: -5px;
+  font-size: 26px;
+  line-height: 30px;
+}
