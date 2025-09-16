@@ -11,10 +11,11 @@ const videoSchema = new mongoose.Schema(
     model: String,
     filename: String,
     transcription: {
-      segment: {
-          tags: String,
-          sentences: []
-        }
+      segments: [{
+        speaker: String,
+        tags: [],
+        sentences: []
+      }]
     }
   }
 )

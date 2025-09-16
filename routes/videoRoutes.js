@@ -5,7 +5,7 @@ const fs = require('fs');
 const router = express.Router();
 
 const video = require('../models/video');
-const { model } = require('mongoose');
+
 
 // LIST ALL VIDEOS
 router.get('/list', async (req, res) => {
@@ -32,6 +32,17 @@ router.get('/show/:id', async (req, res) => {
   }
 });
 
+
+// Funktion zum Bereinigen des Filenames
+function sanitizeFilename(name) {
+  return name
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-zA-Z0-9.-]/g, '_'); // Ersetze andere Sonderzeichen mit _
+}
+
 // Multer-Konfiguration für Datei-Uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -43,7 +54,8 @@ const storage = multer.diskStorage({
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = String(now.getFullYear()).slice(-2);
     const datePrefix = day + month + year;
-    cb(null, datePrefix + '_' + file.originalname);
+    const sanitizedName = sanitizeFilename(file.originalname);
+    cb(null, datePrefix + '_' + sanitizedName);
   }
 });
 const upload = multer({ storage });
@@ -63,7 +75,7 @@ router.post('/upload', upload.fields([{ name: 'mp4', maxCount: 1 }, { name: 'jso
       model: jsonData.model,
       filename: req.files.mp4[0].filename,
       transcription: {
-        segment: { sentences: jsonData.segments }
+        segments: { sentences: jsonData.segments }
       }
     });
     await newVideo.save();

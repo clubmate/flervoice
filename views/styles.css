@@ -89,6 +89,11 @@ main {
   gap: 40px;
 }
 
+.video-player video {
+  width: 300px
+}
+
+
 .video-transcript section {
   display: flex;
   gap: 20px;

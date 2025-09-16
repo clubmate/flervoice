@@ -9,6 +9,7 @@ app.use(express.json());
 
 // INIT ROUTES
 app.use(express.static(__dirname + '/views'));
+app.use('/media', express.static(__dirname + '/media'));
 app.use('/api/video', videoRoutes)
 
 // INIT SERVERs
