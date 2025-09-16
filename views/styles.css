@@ -111,6 +111,10 @@ main {
   line-height: 30px;
 }
 
+.video-transcript .text span.highlight {
+  color: #72bdff;
+}
+
 
 .overlay {
   display: none;

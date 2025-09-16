@@ -60,7 +60,21 @@ $(function() { // Dokument bereit
         segment.sentences.forEach(sentence => {
           $('.text').append(`<span data-start="${sentence.start}" data-end="${sentence.end}">${sentence.text} </span>`);
         });
+      });
 
+      // Highlighting für aktuellen Satz
+      $('.video-player video').on('timeupdate', function() {
+        
+        const currentTime = $('.video-player video')[0].currentTime;
+        $('.video-transcript .text span').removeClass('highlight'); // Alte Highlights entfernen
+        
+        $('.video-transcript .text span').each(function() {
+          const start = parseFloat($(this).data('start'));
+          const end = parseFloat($(this).data('end'));
+          if (currentTime >= start && currentTime < end) {
+            $(this).addClass('highlight');
+          }
+        });
       });
 
     } catch (error) {
