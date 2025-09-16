@@ -10,7 +10,7 @@
 <header>
   <button>SIDEBAR AUFKLAPPEN</button>
   <input type="text" placeholder="SEARCH">
-  <button>UPLOAD</button>
+  <button id="upload-button">UPLOAD</button>
 </header>
 
 <content>
@@ -44,6 +44,16 @@
   </div>
 </main>
 </content>
+
+<div id="upload-overlay" class="overlay">
+  <div class="overlay-content">
+    <form id="upload-form">
+      MP4<input type="file" id="file-input" accept="video/*" required>
+      JSON<input type="file" id="json-input" accept="application/json" required>
+      <button type="submit">UPLOAD</button>
+    </form>
+  </div>
+</div>
 
 <script src="backend.js"></script>
 
