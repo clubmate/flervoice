@@ -82,6 +82,10 @@ aside .tag-title {
   font-size: 0.8em;
 }
 
+.pill.speaker {
+  background-color: #ab8000;
+}
+
 main {
   display: flex;
   flex: 5;
@@ -93,6 +97,11 @@ main {
   width: 300px
 }
 
+.video-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 .video-transcript section {
   display: flex;
@@ -106,9 +115,9 @@ main {
 }
 
 .video-transcript .text {
-  margin-top: -5px;
-  font-size: 26px;
-  line-height: 30px;
+  margin-top: -8px;
+  font-size: 28px;
+  line-height: 36px;
 }
 
 .video-transcript .text span.highlight {

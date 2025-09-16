@@ -32,6 +32,44 @@ router.get('/show/:id', async (req, res) => {
   }
 });
 
+// UPDATE TRANSCRIPTION
+router.put('/update-transcription/:id', async (req, res) => {
+  try {
+    const { segmentIndex, sentenceIndex, newSpeaker } = req.body;
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    
+    const segments = videoData.transcription.segments;
+    if (segmentIndex >= segments.length || sentenceIndex >= segments[segmentIndex].sentences.length) {
+      return res.status(400).json({ message: 'Ungültiger Index' });
+    }
+    
+    // Neues Segment erstellen mit restlichen Sentences
+    const newSegment = {
+      speaker: newSpeaker,
+      tags: segments[segmentIndex].tags, // Tags kopieren
+      sentences: segments[segmentIndex].sentences.slice(sentenceIndex)
+    };
+    
+    // Altes Segment kürzen
+    segments[segmentIndex].sentences = segments[segmentIndex].sentences.slice(0, sentenceIndex);
+    
+    // Neues Segment direkt nach dem alten einfügen (Reihenfolge erhalten)
+    segments.splice(segmentIndex + 1, 0, newSegment);
+    
+    // DB aktualisieren
+    await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
+    
+    res.status(200).json({ message: 'Transkription aktualisiert' });
+  } catch (error) {
+    console.log(`Error in /update-transcription/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 
 // Funktion zum Bereinigen des Filenames
 function sanitizeFilename(name) {
@@ -75,7 +113,7 @@ router.post('/upload', upload.fields([{ name: 'mp4', maxCount: 1 }, { name: 'jso
       model: jsonData.model,
       filename: req.files.mp4[0].filename,
       transcription: {
-        segments: { sentences: jsonData.segments }
+        segments: { speaker: "FLER", sentences: jsonData.segments }
       }
     });
     await newVideo.save();

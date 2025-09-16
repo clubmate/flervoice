@@ -45,20 +45,22 @@ $(function() { // Dokument bereit
       $('.video-player video')[0].load(); // Video neu laden (jQuery-Objekt zu DOM-Element)
       
       // Transkription laden
-      $('.video-transcript section').empty();
+      $('.video-transcript').empty();
       video.transcription.segments.forEach(segment => {
-        console.log(segment);
+        
+        $('.video-transcript').append(`<section data-id="${segment._id}"></section>`);
 
-        // TAGS
-        $('.video-transcript section').append(`<div class="tags"></div>`);
+        // SPEAKER + TAGS
+        $(`.video-transcript section[data-id="${segment._id}"]`).append(`<div class="tags"></div>`);
+        $(`.video-transcript section[data-id="${segment._id}"] .tags`).append(`<span class="pill speaker">${segment.speaker}</span>`);
         segment.tags.forEach(tag => {
-          $('.tags').append(`<span class="pill">${tag}</span>`);
+          $(`.video-transcript section[data-id="${segment._id}"] .tags`).append(`<span class="pill">${tag}</span>`);
         });
 
         // SENTENCES
-        $('.video-transcript section').append(`<div class="text"></div>`);
+        $(`.video-transcript section[data-id="${segment._id}"]`).append(`<div class="text"></div>`);
         segment.sentences.forEach(sentence => {
-          $('.text').append(`<span data-start="${sentence.start}" data-end="${sentence.end}">${sentence.text} </span>`);
+          $(`.video-transcript section[data-id="${segment._id}"] .text`).append(`<span data-start="${sentence.start}" data-end="${sentence.end}">${sentence.text} </span>`);
         });
       });
 
@@ -76,6 +78,54 @@ $(function() { // Dokument bereit
           }
         });
       });
+
+      // Rechtsklick auf Satz für Speaker-Änderung
+$('.video-transcript .text span').on('contextmenu', function(e) {
+  e.preventDefault();
+  const $span = $(this);
+  const segmentIndex = $span.closest('.video-transcript section').index();
+  const sentenceIndex = $span.index();
+  
+  // Tooltip erstellen
+  const $tooltip = $('<div>', {
+    class: 'speaker-tooltip',
+    html: `
+      <input type="text" placeholder="Neuer Speaker" id="new-speaker">
+      <button id="save-speaker">Speichern</button>
+      <button id="cancel-speaker">Abbrechen</button>
+    `,
+    css: {
+      position: 'absolute',
+      top: e.pageY + 'px',
+      left: e.pageX + 'px',
+      background: '#fff',
+      border: '1px solid #ccc',
+      padding: '10px',
+      zIndex: 1000
+    }
+  });
+  $('body').append($tooltip);
+  
+  $('#save-speaker').on('click', async function() {
+    const newSpeaker = $('#new-speaker').val().trim();
+    if (newSpeaker) {
+      // Daten an Endpoint senden
+      await fetch(`/api/video/update-transcription/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex, sentenceIndex, newSpeaker })
+      });
+      
+      // UI neu laden
+      loadVideoContent(videoId);
+    }
+    $tooltip.remove();
+  });
+  
+  $('#cancel-speaker').on('click', function() {
+    $tooltip.remove();
+  });
+});
 
     } catch (error) {
       console.error('Fehler beim Laden des Video-Inhalts:', error);
