@@ -4,6 +4,62 @@ const uploadForm = document.getElementById('upload-form');
 const fileInput = document.getElementById('file-input');
 const jsonInput = document.getElementById('json-input');
 
+// Videos laden und Liste befüllen
+async function loadVideos() {
+  try {
+    const response = await fetch('/api/video/list');
+    const videos = await response.json();
+    
+    const videosSection = document.querySelector('.videos');
+    videosSection.innerHTML = ''; // Bestehende Liste leeren
+    
+    videos.forEach(video => {
+      const link = document.createElement('a');
+      link.innerHTML = `
+        <div class="video-title">${video.title.toUpperCase()}</div>
+        <div class="video-subtitle">${video.uploadDate} &bull; ${video.uploader}</div>
+      `;
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadVideoContent(video._id);
+      });
+      videosSection.appendChild(link);
+    });
+  } catch (error) {
+    console.error('Fehler beim Laden der Videos:', error);
+  }
+}
+
+// Video-Inhalt laden
+async function loadVideoContent(videoId) {
+  try {
+    const response = await fetch(`/api/video/show/${videoId}`);
+    const video = await response.json();
+
+    console.log(video);
+    
+    // Video laden
+    const videoPlayer = document.querySelector('.video-player video source');
+    videoPlayer.src = `/media/${video.filename}`;
+    document.querySelector('.video-player video').load(); // Video neu laden
+    
+    // Transkription laden
+    const transcriptSection = document.querySelector('.video-transcript');
+    transcriptSection.innerHTML = '';
+   
+    video.transcription.segment.sentences.forEach(sentence => {
+      const sentenceSpan = document.createElement('span');
+      sentenceSpan.innerHTML = `${sentence.text || 'Kein Text'} `; // Passe an, wenn Sentence-Struktur anders ist
+      transcriptSection.appendChild(sentenceSpan);
+    });
+
+  } catch (error) {
+    console.error('Fehler beim Laden des Video-Inhalts:', error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadVideos);
+
 
 // Overlay öffnen
 uploadBtn.addEventListener('click', () => {

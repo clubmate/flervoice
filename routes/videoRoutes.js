@@ -5,6 +5,32 @@ const fs = require('fs');
 const router = express.Router();
 
 const video = require('../models/video');
+const { model } = require('mongoose');
+
+// LIST ALL VIDEOS
+router.get('/list', async (req, res) => {
+  try {
+    const videos = await video.find();
+    res.status(200).json(videos);
+  } catch (error) {
+    console.log(`Error in /list: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// SHOW SINGLE VIDEO
+router.get('/show/:id', async (req, res) => {
+  try {
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    res.status(200).json(videoData);
+  } catch (error) {
+    console.log(`Error in /videos/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Multer-Konfiguration für Datei-Uploads
 const storage = multer.diskStorage({
@@ -27,7 +53,20 @@ router.post('/upload', upload.fields([{ name: 'mp4', maxCount: 1 }, { name: 'jso
   try {
     const jsonFile = req.files.json[0];
     const jsonData = JSON.parse(fs.readFileSync(jsonFile.path, 'utf8'));
-    console.log('JSON-Inhalt:', jsonData);
+
+    const newVideo = new video({ 
+      title: jsonData.title,
+      description: jsonData.description,
+      uploader: jsonData.uploader,
+      uploadDate: jsonData.upload_date,
+      videoId: jsonData.video_id,
+      model: jsonData.model,
+      filename: req.files.mp4[0].filename,
+      transcription: {
+        segment: { sentences: jsonData.segments }
+      }
+    });
+    await newVideo.save();
 
     // SEND RESPONSE  
     //res.json(videoData)
