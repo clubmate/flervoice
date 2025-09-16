@@ -127,6 +127,56 @@ $('.video-transcript .text span').on('contextmenu', function(e) {
   });
 });
 
+
+
+// Klick auf Speaker-Pill für Speaker-Änderung
+$('.video-transcript').on('click', '.pill.speaker', function(e) {
+  e.preventDefault();
+  const $pill = $(this);
+  const segmentIndex = $pill.closest('.video-transcript section').index();
+  const currentSpeaker = $pill.text();
+  
+  // Tooltip erstellen
+  const $tooltip = $('<div>', {
+    class: 'speaker-tooltip',
+    html: `
+      <input type="text" placeholder="Neuer Speaker" id="new-speaker" value="${currentSpeaker}">
+      <button id="save-speaker">Speichern</button>
+      <button id="cancel-speaker">Abbrechen</button>
+    `,
+    css: {
+      position: 'absolute',
+      top: e.pageY + 'px',
+      left: e.pageX + 'px',
+      background: '#fff',
+      border: '1px solid #ccc',
+      padding: '10px',
+      zIndex: 1000
+    }
+  });
+  $('body').append($tooltip);
+  
+  $('#save-speaker').on('click', async function() {
+    const newSpeaker = $('#new-speaker').val().trim();
+    if (newSpeaker && newSpeaker !== currentSpeaker) {
+      // Daten an Endpoint senden (ohne sentenceIndex)
+      await fetch(`/api/video/update-transcription/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex, newSpeaker })
+      });
+      
+      // UI neu laden
+      loadVideoContent(videoId);
+    }
+    $tooltip.remove();
+  });
+  
+  $('#cancel-speaker').on('click', function() {
+    $tooltip.remove();
+  });
+});
+
     } catch (error) {
       console.error('Fehler beim Laden des Video-Inhalts:', error);
     }

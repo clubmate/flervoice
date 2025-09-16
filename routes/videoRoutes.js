@@ -42,22 +42,28 @@ router.put('/update-transcription/:id', async (req, res) => {
     }
     
     const segments = videoData.transcription.segments;
-    if (segmentIndex >= segments.length || sentenceIndex >= segments[segmentIndex].sentences.length) {
-      return res.status(400).json({ message: 'Ungültiger Index' });
+    if (segmentIndex >= segments.length) {
+      return res.status(400).json({ message: 'Ungültiger Segment-Index' });
     }
     
-    // Neues Segment erstellen mit restlichen Sentences
-    const newSegment = {
-      speaker: newSpeaker,
-      tags: segments[segmentIndex].tags, // Tags kopieren
-      sentences: segments[segmentIndex].sentences.slice(sentenceIndex)
-    };
-    
-    // Altes Segment kürzen
-    segments[segmentIndex].sentences = segments[segmentIndex].sentences.slice(0, sentenceIndex);
-    
-    // Neues Segment direkt nach dem alten einfügen (Reihenfolge erhalten)
-    segments.splice(segmentIndex + 1, 0, newSegment);
+    if (sentenceIndex !== undefined) {
+      // Sentences verschieben (bestehende Logik)
+      if (sentenceIndex >= segments[segmentIndex].sentences.length) {
+        return res.status(400).json({ message: 'Ungültiger Sentence-Index' });
+      }
+      
+      const newSegment = {
+        speaker: newSpeaker,
+        tags: segments[segmentIndex].tags,
+        sentences: segments[segmentIndex].sentences.slice(sentenceIndex)
+      };
+      
+      segments[segmentIndex].sentences = segments[segmentIndex].sentences.slice(0, sentenceIndex);
+      segments.splice(segmentIndex + 1, 0, newSegment);
+    } else {
+      // Nur Speaker ändern
+      segments[segmentIndex].speaker = newSpeaker;
+    }
     
     // DB aktualisieren
     await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
