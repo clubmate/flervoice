@@ -33,6 +33,27 @@ $(function() { // Dokument bereit
     }
   }
 
+  // Tags laden und in Sidebar anzeigen
+async function loadTags() {
+  try {
+    const response = await fetch('/api/video/tags');
+    const tags = await response.json();
+    
+    const $tagsSection = $('.tags');
+    $tagsSection.empty(); // Bestehende Tags leeren
+    
+    tags.forEach(({ tag, count }) => {
+      const $link = $('<a>', {
+        href: '#',
+        html: `<span class="tag-title">${tag}</span><span class="pill">${count}</span>`
+      });
+      $tagsSection.append($link);
+    });
+  } catch (error) {
+    console.error('Fehler beim Laden der Tags:', error);
+  }
+}
+
   // Video-Inhalt laden
   async function loadVideoContent(videoId) {
     try {
@@ -237,6 +258,7 @@ $('.video-transcript').on('click', '.pill:not(.speaker)', async function(e) {
   // Tags aus DB holen für Autocomplete
   const tagsResponse = await fetch('/api/video/tags');
   const allTags = await tagsResponse.json();
+  const tagList = allTags.map(({ tag }) => tag); // Tags extrahieren
   
   // SweetAlert2-Popup mit Input und Datalist für Autocomplete (wie beim Neu-Erstellen)
   Swal.fire({
@@ -244,7 +266,7 @@ $('.video-transcript').on('click', '.pill:not(.speaker)', async function(e) {
     html: `
       <input id="edit-tag-input" class="swal2-input" list="edit-tag-list" value="${tagText}" placeholder="Neuer Tag">
       <datalist id="edit-tag-list">
-        ${allTags.map(tag => `<option value="${tag}">`).join('')}
+        ${tagList.map(tag => `<option value="${tag}">`).join('')}
       </datalist>
     `,
     showDenyButton: true,
@@ -303,6 +325,7 @@ $('.video-transcript').on('click', '.add-tag', async function(e) {
   // Tags aus DB holen
   const tagsResponse = await fetch('/api/video/tags');
   const allTags = await tagsResponse.json();
+  const tagList = allTags.map(({ tag }) => tag); // Tags extrahieren
   
   // SweetAlert2-Popup mit Input und Datalist für Autocomplete
   Swal.fire({
@@ -310,7 +333,7 @@ $('.video-transcript').on('click', '.add-tag', async function(e) {
     html: `
       <input id="tag-input" class="swal2-input" list="tag-list" placeholder="Tag eingeben">
       <datalist id="tag-list">
-        ${allTags.map(tag => `<option value="${tag}">`).join('')}
+       ${tagList.map(tag => `<option value="${tag}">`).join('')}
       </datalist>
     `,
     showCancelButton: true,
@@ -345,6 +368,7 @@ $('.video-transcript').on('click', '.add-tag', async function(e) {
 
   // Videos beim Laden laden
   loadVideos();
+  loadTags();
 
   // Overlay öffnen
   $uploadBtn.on('click', function() {

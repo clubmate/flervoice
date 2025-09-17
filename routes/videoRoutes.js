@@ -140,8 +140,10 @@ router.get('/tags', async (req, res) => {
       });
     });
     
-    // Nach Häufigkeit sortieren
-    const sortedTags = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]);
+    // Sortieren und als Array mit Tag und Count zurückgeben
+    const sortedTags = Object.keys(tagCount)
+      .sort((a, b) => tagCount[b] - tagCount[a])
+      .map(tag => ({ tag, count: tagCount[tag] }));
     
     res.status(200).json(sortedTags);
   } catch (error) {
