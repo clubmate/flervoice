@@ -120,6 +120,10 @@ main {
   line-height: 36px;
 }
 
+.video-transcript .text span:hover {
+  color: #87aac8;
+}
+
 .video-transcript .text span.highlight {
   color: #72bdff;
 }

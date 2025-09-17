@@ -65,6 +65,16 @@ router.put('/update-transcription/:id', async (req, res) => {
       segments[segmentIndex].speaker = newSpeaker;
     }
     
+    // Automatisch Segmente mit gleichem Speaker zusammenführen
+    for (let i = segments.length - 1; i > 0; i--) {
+      if (segments[i].speaker === segments[i - 1].speaker) {
+        // Sentences zusammenführen
+        segments[i - 1].sentences = segments[i - 1].sentences.concat(segments[i].sentences);
+        // Segment entfernen
+        segments.splice(i, 1);
+      }
+    }
+    
     // DB aktualisieren
     await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
     

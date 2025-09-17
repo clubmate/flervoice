@@ -86,44 +86,30 @@ $('.video-transcript .text span').on('contextmenu', function(e) {
   const segmentIndex = $span.closest('.video-transcript section').index();
   const sentenceIndex = $span.index();
   
-  // Tooltip erstellen
-  const $tooltip = $('<div>', {
-    class: 'speaker-tooltip',
-    html: `
-      <input type="text" placeholder="Neuer Speaker" id="new-speaker">
-      <button id="save-speaker">Speichern</button>
-      <button id="cancel-speaker">Abbrechen</button>
-    `,
-    css: {
-      position: 'absolute',
-      top: e.pageY + 'px',
-      left: e.pageX + 'px',
-      background: '#fff',
-      border: '1px solid #ccc',
-      padding: '10px',
-      zIndex: 1000
-    }
-  });
-  $('body').append($tooltip);
-  
-  $('#save-speaker').on('click', async function() {
-    const newSpeaker = $('#new-speaker').val().trim();
-    if (newSpeaker) {
+  Swal.fire({
+    title: 'SPLIT SEGMENT',
+    input: 'select', // Select-Feld anstatt Text
+    inputOptions: {
+      FLER: 'FLER',
+      INTERVIEWER: 'INTERVIEWER',
+      OTHER: 'OTHER'
+    },
+    inputPlaceholder: 'SPEAKER',
+    showCancelButton: true,
+    confirmButtonText: 'SAVE',
+    cancelButtonText: 'CANCEL'
+  }).then((result) => {
+    if (result.isConfirmed && result.value) {
+      const newSpeaker = result.value.trim();
       // Daten an Endpoint senden
-      await fetch(`/api/video/update-transcription/${videoId}`, {
+      fetch(`/api/video/update-transcription/${videoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ segmentIndex, sentenceIndex, newSpeaker })
+      }).then(() => {
+        loadVideoContent(videoId); // UI neu laden
       });
-      
-      // UI neu laden
-      loadVideoContent(videoId);
     }
-    $tooltip.remove();
-  });
-  
-  $('#cancel-speaker').on('click', function() {
-    $tooltip.remove();
   });
 });
 
@@ -136,45 +122,40 @@ $('.video-transcript').on('click', '.pill.speaker', function(e) {
   const segmentIndex = $pill.closest('.video-transcript section').index();
   const currentSpeaker = $pill.text();
   
-  // Tooltip erstellen
-  const $tooltip = $('<div>', {
-    class: 'speaker-tooltip',
-    html: `
-      <input type="text" placeholder="Neuer Speaker" id="new-speaker" value="${currentSpeaker}">
-      <button id="save-speaker">Speichern</button>
-      <button id="cancel-speaker">Abbrechen</button>
-    `,
-    css: {
-      position: 'absolute',
-      top: e.pageY + 'px',
-      left: e.pageX + 'px',
-      background: '#fff',
-      border: '1px solid #ccc',
-      padding: '10px',
-      zIndex: 1000
-    }
-  });
-  $('body').append($tooltip);
-  
-  $('#save-speaker').on('click', async function() {
-    const newSpeaker = $('#new-speaker').val().trim();
-    if (newSpeaker && newSpeaker !== currentSpeaker) {
-      // Daten an Endpoint senden (ohne sentenceIndex)
-      await fetch(`/api/video/update-transcription/${videoId}`, {
+  Swal.fire({
+    title: 'CHANGE SPEAKER',
+    input: 'select', // Select-Feld anstatt Text
+    inputOptions: {
+      FLER: 'FLER',
+      INTERVIEWER: 'INTERVIEWER',
+      OTHER: 'OTHER'
+    },
+    inputValue: currentSpeaker,
+    inputPlaceholder: 'SPEAKER',
+    showCancelButton: true,
+    confirmButtonText: 'SAVE',
+    cancelButtonText: 'CANCEL'
+  }).then((result) => {
+    if (result.isConfirmed && result.value && result.value !== currentSpeaker) {
+      const newSpeaker = result.value.trim();
+      // Daten an Endpoint senden
+      fetch(`/api/video/update-transcription/${videoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ segmentIndex, newSpeaker })
+      }).then(() => {
+        loadVideoContent(videoId); // UI neu laden
       });
-      
-      // UI neu laden
-      loadVideoContent(videoId);
     }
-    $tooltip.remove();
   });
-  
-  $('#cancel-speaker').on('click', function() {
-    $tooltip.remove();
-  });
+});
+
+// Klick auf Sentence, um Video zu springen
+$('.video-transcript').on('click', '.text span', function() {
+  const startTime = parseFloat($(this).data('start'));
+  if (!isNaN(startTime)) {
+    $('.video-player video')[0].currentTime = startTime;
+  }
 });
 
     } catch (error) {
