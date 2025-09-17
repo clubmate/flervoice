@@ -75,6 +75,7 @@ aside .tag-title {
 }
 
 .pill {
+  cursor: pointer;
   background-color: #007bff;
   color: #fff;
   padding: 2px 8px;
@@ -112,6 +113,17 @@ main {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.video-transcript .tags .add-tag {
+  display: none;
+  justify-content: center;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.video-transcript .tags:hover .add-tag {
+  display: flex;
 }
 
 .video-transcript .text {

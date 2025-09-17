@@ -126,6 +126,99 @@ router.put('/update-sentence/:id', async (req, res) => {
   }
 });
 
+// GET ALL TAGS SORTED BY FREQUENCY
+router.get('/tags', async (req, res) => {
+  try {
+    const videoData = await video.find({}, 'transcription.segments.tags');
+    const tagCount = {};
+    
+    videoData.forEach(video => {
+      video.transcription.segments.forEach(segment => {
+        segment.tags.forEach(tag => {
+          tagCount[tag] = (tagCount[tag] || 0) + 1;
+        });
+      });
+    });
+    
+    // Nach Häufigkeit sortieren
+    const sortedTags = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]);
+    
+    res.status(200).json(sortedTags);
+  } catch (error) {
+    console.log(`Error in /tags: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ADD TAG TO SEGMENT
+router.put('/add-tag/:id', async (req, res) => {
+  try {
+    const { segmentIndex, newTag } = req.body;
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    
+    const segments = videoData.transcription.segments;
+    if (segmentIndex >= segments.length) {
+      return res.status(400).json({ message: 'Ungültiger Segment-Index' });
+    }
+    
+    // Tag hinzufügen, falls nicht schon vorhanden
+    if (!segments[segmentIndex].tags.includes(newTag)) {
+      segments[segmentIndex].tags.push(newTag);
+    }
+    
+    // DB aktualisieren
+    await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
+    
+    res.status(200).json({ message: 'Tag hinzugefügt' });
+  } catch (error) {
+    console.log(`Error in /add-tag/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// UPDATE OR DELETE TAG IN SEGMENT
+router.put('/update-tag/:id', async (req, res) => {
+  try {
+    const { segmentIndex, oldTag, newTag, deleteTag } = req.body;
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    
+    const segments = videoData.transcription.segments;
+    if (segmentIndex >= segments.length) {
+      return res.status(400).json({ message: 'Ungültiger Segment-Index' });
+    }
+    
+    const tagIndex = segments[segmentIndex].tags.indexOf(oldTag);
+    if (tagIndex === -1) {
+      return res.status(400).json({ message: 'Tag nicht gefunden' });
+    }
+    
+    if (deleteTag) {
+      // Tag löschen
+      segments[segmentIndex].tags.splice(tagIndex, 1);
+    } else {
+      // Tag bearbeiten
+      segments[segmentIndex].tags[tagIndex] = newTag;
+    }
+    
+    // DB aktualisieren
+    await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
+    
+    res.status(200).json({ message: deleteTag ? 'Tag gelöscht' : 'Tag aktualisiert' });
+  } catch (error) {
+    console.log(`Error in /update-tag/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
 // Funktion zum Bereinigen des Filenames
 function sanitizeFilename(name) {
   return name

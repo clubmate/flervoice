@@ -56,6 +56,7 @@ $(function() { // Dokument bereit
         segment.tags.forEach(tag => {
           $(`.video-transcript section[data-id="${segment._id}"] .tags`).append(`<span class="pill">${tag}</span>`);
         });
+        $(`.video-transcript section[data-id="${segment._id}"] .tags`).append(`<span class="add-tag"><i class="bi bi-plus-circle-fill"></i></span>`);
 
         // SENTENCES
         $(`.video-transcript section[data-id="${segment._id}"]`).append(`<div class="text"></div>`);
@@ -225,6 +226,117 @@ $('.video-transcript').on('click', '.text span', function() {
     $video.play(); // Video abspielen, falls es pausiert war
   }
 });
+
+// Klick auf Tag-Pill für Bearbeiten/Löschen
+$('.video-transcript').on('click', '.pill:not(.speaker)', async function(e) {
+  e.preventDefault();
+  const $pill = $(this);
+  const segmentIndex = $pill.closest('.video-transcript section').index();
+  const tagText = $pill.text();
+  
+  // Tags aus DB holen für Autocomplete
+  const tagsResponse = await fetch('/api/video/tags');
+  const allTags = await tagsResponse.json();
+  
+  // SweetAlert2-Popup mit Input und Datalist für Autocomplete (wie beim Neu-Erstellen)
+  Swal.fire({
+    title: 'Tag bearbeiten',
+    html: `
+      <input id="edit-tag-input" class="swal2-input" list="edit-tag-list" value="${tagText}" placeholder="Neuer Tag">
+      <datalist id="edit-tag-list">
+        ${allTags.map(tag => `<option value="${tag}">`).join('')}
+      </datalist>
+    `,
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: 'Speichern',
+    denyButtonText: 'Löschen',
+    cancelButtonText: 'Abbrechen',
+    preConfirm: () => {
+      const inputValue = document.getElementById('edit-tag-input').value.trim();
+      return inputValue;
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Speichern
+      const newTag = result.value;
+      if (newTag && newTag !== tagText) {
+        fetch(`/api/video/update-tag/${videoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ segmentIndex, oldTag: tagText, newTag })
+        }).then(() => {
+          loadVideoContent(videoId); // UI neu laden
+        });
+      }
+    } else if (result.isDenied) {
+      // Löschen mit Bestätigung
+      Swal.fire({
+        title: `Tag "${tagText}" wirklich löschen?`,
+        text: 'Dies kann nicht rückgängig gemacht werden!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ja, löschen',
+        cancelButtonText: 'Abbrechen'
+      }).then((deleteResult) => {
+        if (deleteResult.isConfirmed) {
+          fetch(`/api/video/update-tag/${videoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ segmentIndex, oldTag: tagText, deleteTag: true })
+          }).then(() => {
+            loadVideoContent(videoId); // UI neu laden
+          });
+        }
+      });
+    }
+    // Abbrechen: Nichts tun
+  });
+});
+
+// Klick auf Plus-Icon für neues Tag
+$('.video-transcript').on('click', '.add-tag', async function(e) {
+  e.preventDefault();
+  const $icon = $(this);
+  const segmentIndex = $icon.closest('.video-transcript section').index();
+  
+  // Tags aus DB holen
+  const tagsResponse = await fetch('/api/video/tags');
+  const allTags = await tagsResponse.json();
+  
+  // SweetAlert2-Popup mit Input und Datalist für Autocomplete
+  Swal.fire({
+    title: 'Neues Tag hinzufügen',
+    html: `
+      <input id="tag-input" class="swal2-input" list="tag-list" placeholder="Tag eingeben">
+      <datalist id="tag-list">
+        ${allTags.map(tag => `<option value="${tag}">`).join('')}
+      </datalist>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Hinzufügen',
+    cancelButtonText: 'Abbrechen',
+    preConfirm: () => {
+      const inputValue = document.getElementById('tag-input').value.trim();
+      return inputValue;
+    }
+  }).then((result) => {
+    if (result.isConfirmed && result.value) {
+      const newTag = result.value;
+      // Daten an Endpoint senden
+      fetch(`/api/video/add-tag/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex, newTag })
+      }).then(() => {
+        loadVideoContent(videoId); // UI neu laden
+      });
+    }
+  });
+});
+
+
+
 
     } catch (error) {
       console.error('Fehler beim Laden des Video-Inhalts:', error);
