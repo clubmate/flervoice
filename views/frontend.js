@@ -150,11 +150,79 @@ $('.video-transcript').on('click', '.pill.speaker', function(e) {
   });
 });
 
+// Doppelklick auf Sentence für Text-Änderung
+$('.video-transcript').on('dblclick', '.text span', function() {
+  const $span = $(this);
+  const segmentIndex = $span.closest('.video-transcript section').index();
+  const sentenceIndex = $span.index();
+  const startTime = parseFloat($span.data('start'));
+  const endTime = parseFloat($span.data('end'));
+  const originalText = $span.text().trim();
+  
+  const $video = $('.video-player video')[0];
+  const currentTimeBefore = $video.currentTime; // Aktuelle Zeit speichern
+  const wasPlaying = !$video.paused; // Prüfen, ob es spielte
+  
+  // Video auf Start setzen und Loop aktivieren
+  $video.currentTime = startTime;
+  let loopActive = true;
+  const loopHandler = () => {
+    if (loopActive && $video.currentTime >= endTime) {
+      $video.currentTime = startTime;
+    }
+  };
+  $video.addEventListener('timeupdate', loopHandler);
+  
+  // SweetAlert2-Popup
+  Swal.fire({
+    title: 'Sentence bearbeiten',
+    input: 'text',
+    inputValue: originalText,
+    inputPlaceholder: 'Neuer Text',
+    showCancelButton: true,
+    confirmButtonText: 'Speichern',
+    cancelButtonText: 'Abbrechen',
+    didOpen: () => {
+      // Video läuft weiter
+    },
+    willClose: () => {
+      // Loop deaktivieren und Handler entfernen
+      loopActive = false;
+      $video.removeEventListener('timeupdate', loopHandler);
+    }
+  }).then(async (result) => {
+    // Handler sicherheitshalber entfernen
+    $video.removeEventListener('timeupdate', loopHandler);
+    
+    if (result.isConfirmed && result.value && result.value !== originalText) {
+      const newText = result.value.trim();
+      // Daten an Endpoint senden
+      await fetch(`/api/video/update-sentence/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex, sentenceIndex, newText })
+      });
+      
+      // UI neu laden, aber Video-Zeit und Play-Status wiederherstellen
+      await loadVideoContent(videoId);
+      $video.addEventListener('loadeddata', function onLoaded() {
+        $video.currentTime = currentTimeBefore;
+        if (wasPlaying) {
+          $video.play();
+        }
+        $video.removeEventListener('loadeddata', onLoaded);
+      });
+    }
+  });
+});
+
 // Klick auf Sentence, um Video zu springen
 $('.video-transcript').on('click', '.text span', function() {
   const startTime = parseFloat($(this).data('start'));
   if (!isNaN(startTime)) {
-    $('.video-player video')[0].currentTime = startTime;
+    const $video = $('.video-player video')[0];
+    $video.currentTime = startTime;
+    $video.play(); // Video abspielen, falls es pausiert war
   }
 });
 

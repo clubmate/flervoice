@@ -85,7 +85,46 @@ router.put('/update-transcription/:id', async (req, res) => {
   }
 });
 
-
+// UPDATE SENTENCE TEXT AND WORDS
+router.put('/update-sentence/:id', async (req, res) => {
+  try {
+    const { segmentIndex, sentenceIndex, newText } = req.body;
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    
+    const segments = videoData.transcription.segments;
+    if (segmentIndex >= segments.length || sentenceIndex >= segments[segmentIndex].sentences.length) {
+      return res.status(400).json({ message: 'Ungültiger Index' });
+    }
+    
+    const sentence = segments[segmentIndex].sentences[sentenceIndex];
+    const words = sentence.words || [];
+    
+    // Neuer Text und Words generieren
+    sentence.text = newText;
+    const newWords = newText.split(' ');
+    
+    // Words-Array aktualisieren: Versuche, bestehende Timestamps zu erhalten
+    sentence.words = newWords.map((word, index) => {
+      const existingWord = words[index];
+      return {
+        start: existingWord ? existingWord.start : 0,
+        end: existingWord ? existingWord.end : 0,
+        word: word
+      };
+    });
+    
+    // DB aktualisieren
+    await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
+    
+    res.status(200).json({ message: 'Sentence aktualisiert' });
+  } catch (error) {
+    console.log(`Error in /update-sentence/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Funktion zum Bereinigen des Filenames
 function sanitizeFilename(name) {
