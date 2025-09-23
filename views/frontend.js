@@ -56,22 +56,9 @@ $(function() { // Dokument bereit
   }
 
   // Gemeinsame Funktion zum Rendern eines Segments
-  function renderSegment($container, segment, videoId, videoFilename, videoTitle, videoUploader, segmentIndex) {
+  function renderSegment($container, segment, videoId, segmentIndex) {
     $container.attr('data-video-id', videoId);
     $container.attr('data-segment-index', segmentIndex);
-    
-    // Video-Player immer hinzufügen (leer, wenn kein Video)
-    $container.append(`<div class="video-player"></div>`);
-    if (videoFilename) {
-      $container.find('.video-player').append(`
-        <video controls>
-          <source src="/media/${videoFilename}" type="video/mp4">
-        </video>
-        <div class="video-info">
-          <strong>${videoTitle}</strong> by ${videoUploader}
-        </div>
-      `);
-    }
     
     // SPEAKER + TAGS
     $container.append(`<div class="tags"></div>`);
@@ -106,22 +93,40 @@ $(function() { // Dokument bereit
       
       // Für jede Gruppe rendern
       Object.values(grouped).forEach(group => {
+        const $group = $('<div class="video-group">');
+        
+        // Video-Player für die Gruppe
+        $group.append(`
+          <div class="video-player">
+            <video controls>
+              <source src="/media/${group[0].videoFilename}" type="video/mp4">
+            </video>
+            <div class="video-info">
+              <strong>${group[0].videoTitle}</strong> by ${group[0].videoUploader}
+            </div>
+          </div>
+        `);
+        
+        // Segmente wrapper
+        const $segments = $('<div class="segments">');
         group.forEach((segment, index) => {
           const $container = $('<div class="segment-container">');
-          const showVideo = index === 0; // Video nur beim ersten Segment der Gruppe
-          renderSegment($container, segment, segment.videoId, showVideo ? segment.videoFilename : null, showVideo ? segment.videoTitle : null, showVideo ? segment.videoUploader : null, segment.segmentIndex);
-          $('.video-transcript').append($container);
+          renderSegment($container, segment, segment.videoId, segment.segmentIndex);
+          $segments.append($container);
         });
+        $group.append($segments);
+        
+        $('.video-transcript').append($group);
       });
       
-      // Highlighting für jedes Container-Video
-      $('.segment-container video').each(function() {
+      // Highlighting für jedes Video
+      $('.video-group video').each(function() {
         $(this).on('timeupdate', function() {
           const currentTime = this.currentTime;
-          const $container = $(this).closest('.segment-container');
-          $container.find('.text span').removeClass('highlight');
+          const $group = $(this).closest('.video-group');
+          $group.find('.text span').removeClass('highlight');
           
-          $container.find('.text span').each(function() {
+          $group.find('.text span').each(function() {
             const start = parseFloat($(this).data('start'));
             const end = parseFloat($(this).data('end'));
             if (currentTime >= start && currentTime < end) {
@@ -151,21 +156,40 @@ $(function() { // Dokument bereit
       
       // Transkription laden
       $('.video-transcript').empty();
+      
+      const $group = $('<div class="video-group">');
+      
+      // Video-Player
+      $group.append(`
+        <div class="video-player">
+          <video controls>
+            <source src="/media/${video.filename}" type="video/mp4">
+          </video>
+          <div class="video-info">
+            <strong>${video.title}</strong> by ${video.uploader}
+          </div>
+        </div>
+      `);
+      
+      // Segmente wrapper
+      const $segments = $('<div class="segments">');
       video.transcription.segments.forEach((segment, index) => {
         const $container = $('<div class="segment-container">');
-        const showVideo = index === 0; // Video nur beim ersten Segment
-        renderSegment($container, segment, videoId, showVideo ? video.filename : null, showVideo ? video.title : null, showVideo ? video.uploader : null, index);
-        $('.video-transcript').append($container);
+        renderSegment($container, segment, videoId, index);
+        $segments.append($container);
       });
+      $group.append($segments);
+      
+      $('.video-transcript').append($group);
 
-      // Highlighting für das Video im ersten Segment
-      const $firstVideo = $('.video-transcript .segment-container:first .video-player video');
-      if ($firstVideo.length) {
-        $firstVideo.on('timeupdate', function() {
+      // Highlighting für das Video
+      const $video = $('.video-group video')[0];
+      if ($video) {
+        $video.addEventListener('timeupdate', function() {
           const currentTime = this.currentTime;
-          $('.video-transcript .text span').removeClass('highlight');
+          $('.video-group .text span').removeClass('highlight');
           
-          $('.video-transcript .text span').each(function() {
+          $('.video-group .text span').each(function() {
             const start = parseFloat($(this).data('start'));
             const end = parseFloat($(this).data('end'));
             if (currentTime >= start && currentTime < end) {
@@ -210,17 +234,7 @@ $(function() { // Dokument bereit
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ segmentIndex, sentenceIndex, newSpeaker })
         }).then(() => {
-          // Nach Update neu laden, abhängig vom Modus
-          if ($('.video-transcript .segment-container').length > 1) {
-            // Tag-Modus, aber da Segmente aus verschiedenen Videos, besser die aktuelle Ansicht neu laden
-            // Für Einfachheit, lade die Tag-Ansicht neu, aber das ist tricky.
-            // Da videoId bekannt, lade loadVideoContent(videoId), aber das wechselt zur normalen Ansicht.
-            // Um zu bleiben, könnte man die URL oder einen Modus speichern.
-            // Für jetzt, lade loadVideoContent, aber das ist nicht ideal.
-            loadVideoContent(videoId);
-          } else {
-            loadVideoContent(videoId);
-          }
+          loadVideoContent(videoId);
         });
       }
     });
@@ -265,8 +279,8 @@ $(function() { // Dokument bereit
   // Klick auf Sentence, um Video zu springen
   $('.video-transcript').on('click', '.text span', function() {
     const $span = $(this);
-    const $container = $span.closest('[data-video-id]');
-    const $video = $container.find('video')[0] || $('.video-transcript [data-video-id] .video-player video')[0];
+    const $group = $span.closest('.video-group');
+    const $video = $group.find('video')[0];
     if ($video) {
       const startTime = parseFloat($span.data('start'));
       if (!isNaN(startTime)) {
@@ -279,7 +293,9 @@ $(function() { // Dokument bereit
   // Doppelklick auf Sentence für Text-Änderung
   $('.video-transcript').on('dblclick', '.text span', function() {
     const $span = $(this);
-    const $container = $span.closest('[data-video-id]');
+    const $group = $span.closest('.video-group');
+    const $video = $group.find('video')[0];
+    const $container = $span.closest('.segment-container');
     const videoId = $container.data('video-id');
     const segmentIndex = $container.data('segment-index');
     const sentenceIndex = $span.index();
@@ -287,7 +303,6 @@ $(function() { // Dokument bereit
     const endTime = parseFloat($span.data('end'));
     const originalText = $span.text().trim();
     
-    const $video = $container.find('video')[0] || $('.video-transcript [data-video-id] .video-player video')[0];
     const currentTimeBefore = $video ? $video.currentTime : 0;
     const wasPlaying = $video ? !$video.paused : false;
     
