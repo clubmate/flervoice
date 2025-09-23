@@ -68,6 +68,13 @@ aside .video-subtitle {
   font-size: 14px;
 }
 
+aside .video-tags {
+display: flex;
+  align-items: center;
+    gap: 4px;
+}
+
+
 aside .tag-title {
   flex: 1;
   color: #ffffff;
@@ -117,7 +124,17 @@ main {
   position: absolute;
   top: 280px;
   font-size: 24px;
+  display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
+
+.video-player .video-tags {
+  display: flex;
+  gap: 4px;
+  font-size: 16px;
+}
+
 
 .video-transcript .segments {
   display: flex;

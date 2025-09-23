@@ -16,7 +16,8 @@ const videoSchema = new mongoose.Schema(
         tags: [],
         sentences: []
       }]
-    }
+    },
+    videoTags: [String]
   }
 )
 

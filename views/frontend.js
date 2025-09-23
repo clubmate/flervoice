@@ -14,20 +14,46 @@ $(function() { // Dokument bereit
       const $videosSection = $('.videos');
       $videosSection.empty(); // Bestehende Liste leeren
       
-      videos.forEach(video => {
-        const $link = $('<a>', {
-          href: '#',
-          html: `
-            <div class="video-title">${video.title.toUpperCase()}</div>
-            <div class="video-subtitle">${video.uploadDate} &bull; ${video.uploader}</div>
-          `
-        });
-        $link.on('click', function(e) {
-          e.preventDefault();
-          loadVideoContent(video._id);
-        });
-        $videosSection.append($link);
+videos.forEach(video => {
+  const $link = $('<a>', {
+    href: '#',
+    html: `
+      <div class="video-title">${video.title.toUpperCase()}</div>
+      <div class="video-subtitle">${video.uploadDate} &bull; ${video.uploader}</div>
+      <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}       <i class="bi bi-plus-circle-fill edit-video-tags" data-id="${video._id}"></i></div>
+    `
+  });
+  $link.on('click', function(e) {
+    if ($(e.target).hasClass('edit-video-tags')) {
+      e.preventDefault();
+      const videoId = $(e.target).data('id');
+      const currentTags = video.videoTags ? video.videoTags.join(', ') : '';
+      Swal.fire({
+        title: 'Video-Tags bearbeiten',
+        input: 'text',
+        inputValue: currentTags,
+        inputPlaceholder: 'Tags durch Komma trennen',
+        showCancelButton: true,
+        confirmButtonText: 'Speichern',
+        cancelButtonText: 'Abbrechen'
+      }).then((result) => {
+        if (result.isConfirmed && result.value !== null) {
+          const tags = result.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+          fetch(`/api/video/update-video-tags/${videoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoTags: tags })
+          }).then(() => {
+            loadVideos(); // UI neu laden
+          });
+        }
       });
+    } else {
+      loadVideoContent(video._id);
+    }
+  });
+  $videosSection.append($link);
+});
     } catch (error) {
       console.error('Fehler beim Laden der Videos:', error);
     }
@@ -102,7 +128,8 @@ $(function() { // Dokument bereit
               <source src="/media/${group[0].videoFilename}" type="video/mp4">
             </video>
             <div class="video-info">
-              <strong>${group[0].videoTitle}</strong> by ${group[0].videoUploader}
+              <strong>${group[0].videoTitle}</strong>
+              <div class="video-tags">${group[0].videoTags ? group[0].videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
             </div>
           </div>
         `);
@@ -166,7 +193,8 @@ $(function() { // Dokument bereit
             <source src="/media/${video.filename}" type="video/mp4">
           </video>
           <div class="video-info">
-            <strong>${video.title}</strong> by ${video.uploader}
+            <strong>${video.title}</strong>
+            <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
           </div>
         </div>
       `);

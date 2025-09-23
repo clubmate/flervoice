@@ -119,6 +119,18 @@ router.put('/update-sentence/:id', async (req, res) => {
   }
 });
 
+// UPDATE VIDEO TAGS
+router.put('/update-video-tags/:id', async (req, res) => {
+  try {
+    const { videoTags } = req.body;
+    await video.findByIdAndUpdate(req.params.id, { videoTags });
+    res.status(200).json({ message: 'Video-Tags aktualisiert' });
+  } catch (error) {
+    console.log(`Error in /update-video-tags/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // GET ALL TAGS SORTED BY FREQUENCY
 router.get('/tags', async (req, res) => {
   try {
@@ -224,6 +236,7 @@ router.get('/search-segments-by-tag/:tag', async (req, res) => {
           matchingSegments.push({
             videoId: video._id,
             videoTitle: video.title,
+            videoTags: video.videoTags,
             videoUploader: video.uploader,
             videoFilename: video.filename, // Filename hinzufügen
             segmentIndex,
