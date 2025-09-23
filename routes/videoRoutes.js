@@ -46,36 +46,29 @@ router.put('/update-transcription/:id', async (req, res) => {
       return res.status(400).json({ message: 'Ungültiger Segment-Index' });
     }
     
-    if (sentenceIndex !== undefined) {
-      // Sentences verschieben (bestehende Logik)
-      if (sentenceIndex >= segments[segmentIndex].sentences.length) {
-        return res.status(400).json({ message: 'Ungültiger Sentence-Index' });
-      }
-      
-      const newSegment = {
-        speaker: newSpeaker,
-        tags: segments[segmentIndex].tags,
-        sentences: segments[segmentIndex].sentences.slice(sentenceIndex)
-      };
-      
-      segments[segmentIndex].sentences = segments[segmentIndex].sentences.slice(0, sentenceIndex);
-      segments.splice(segmentIndex + 1, 0, newSegment);
-    } else {
-      // Nur Speaker ändern
-      segments[segmentIndex].speaker = newSpeaker;
+    const segment = segments[segmentIndex];
+    if (sentenceIndex >= segment.sentences.length) {
+      return res.status(400).json({ message: 'Ungültiger Sentence-Index' });
     }
     
-    // Automatisch Segmente mit gleichem Speaker zusammenführen
-    for (let i = segments.length - 1; i > 0; i--) {
-      if (segments[i].speaker === segments[i - 1].speaker) {
-        // Sentences zusammenführen
-        segments[i - 1].sentences = segments[i - 1].sentences.concat(segments[i].sentences);
-        // Segment entfernen
-        segments.splice(i, 1);
-      }
-    }
+    // Split the sentences
+    const beforeSentences = segment.sentences.slice(0, sentenceIndex + 1);
+    const afterSentences = segment.sentences.slice(sentenceIndex + 1);
     
-    // DB aktualisieren
+    // Update the current segment with before sentences
+    segment.sentences = beforeSentences;
+    
+    // Create new segment with after sentences, new speaker, and no tags
+    const newSegment = {
+      speaker: newSpeaker,
+      tags: [], // Keine Tags für das neue Segment
+      sentences: afterSentences
+    };
+    
+    // Insert the new segment after the current one
+    segments.splice(segmentIndex + 1, 0, newSegment);
+    
+    // Save
     await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
     
     res.status(200).json({ message: 'Transkription aktualisiert' });

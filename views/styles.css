@@ -81,6 +81,7 @@ aside .tag-title {
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 0.8em;
+  width: fit-content;
 }
 
 .pill.speaker {
@@ -94,8 +95,13 @@ main {
   gap: 40px;
 }
 
+.video-player {
+  min-width: 500px
+}
+
+
 .video-player video {
-  width: 300px
+  width: 500px
 }
 
 .video-transcript {
@@ -104,7 +110,7 @@ main {
   gap: 20px;
 }
 
-.video-transcript section {
+.video-transcript .segment-container {
   display: flex;
   gap: 20px;
 }
@@ -113,6 +119,9 @@ main {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 100px;
+  max-width: 100px;
+  align-items: end;
 }
 
 .video-transcript .tags .add-tag {
@@ -120,6 +129,7 @@ main {
   justify-content: center;
   padding: 10px;
   cursor: pointer;
+  padding-right: 0px;
 }
 
 .video-transcript .tags:hover .add-tag {
