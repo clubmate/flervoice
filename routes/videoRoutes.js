@@ -218,6 +218,38 @@ router.put('/update-tag/:id', async (req, res) => {
   }
 });
 
+// GET SEGMENTS BY TAG FROM ALL VIDEOS
+router.get('/search-segments-by-tag/:tag', async (req, res) => {
+  try {
+    const tag = req.params.tag;
+    const videoData = await video.find({}, 'title uploader filename transcription.segments');
+    const matchingSegments = [];
+    
+    videoData.forEach(video => {
+      video.transcription.segments.forEach((segment, segmentIndex) => {
+        if (segment.tags.includes(tag)) {
+          matchingSegments.push({
+            videoId: video._id,
+            videoTitle: video.title,
+            videoUploader: video.uploader,
+            videoFilename: video.filename, // Filename hinzufügen
+            segmentIndex,
+            speaker: segment.speaker,
+            tags: segment.tags,
+            sentences: segment.sentences
+          });
+        }
+      });
+    });
+    
+    res.status(200).json(matchingSegments);
+  } catch (error) {
+    console.log(`Error in /search-segments-by-tag/:tag: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 
 
 

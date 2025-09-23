@@ -45,6 +45,7 @@ async function loadTags() {
     tags.forEach(({ tag, count }) => {
       const $link = $('<a>', {
         href: '#',
+        'data-tag': tag, // Tag speichern
         html: `<span class="tag-title">${tag}</span><span class="pill">${count}</span>`
       });
       $tagsSection.append($link);
@@ -53,6 +54,88 @@ async function loadTags() {
     console.error('Fehler beim Laden der Tags:', error);
   }
 }
+
+// Segmente nach Tag laden und anzeigen
+async function loadSegmentsByTag(tag) {
+  try {
+    const response = await fetch(`/api/video/search-segments-by-tag/${encodeURIComponent(tag)}`);
+    const segments = await response.json();
+    
+    // Content-Bereich leeren
+    $('.video-transcript').empty();
+    
+    segments.forEach((segment, index) => {
+      const containerId = `segment-container-${index}`;
+      $('.video-transcript').append(`<div class="segment-container" id="${containerId}"></div>`);
+      
+      // Video-Player hinzufügen
+      $(`#${containerId}`).append(`
+        <div class="video-player">
+          <video controls>
+            <source src="/media/${segment.videoFilename || 'placeholder.mp4'}" type="video/mp4">
+          </video>
+        </div>
+      `);
+      
+      // Video-Info hinzufügen
+      $(`#${containerId}`).append(`
+        <div class="video-info">
+          <strong>${segment.videoTitle}</strong> by ${segment.videoUploader}
+        </div>
+      `);
+      
+      // SPEAKER + TAGS
+      $(`#${containerId}`).append(`<div class="tags"></div>`);
+      $(`#${containerId} .tags`).append(`<span class="pill speaker">${segment.speaker}</span>`);
+      segment.tags.forEach(tagItem => {
+        $(`#${containerId} .tags`).append(`<span class="pill">${tagItem}</span>`);
+      });
+      
+      // SENTENCES
+      $(`#${containerId}`).append(`<div class="text"></div>`);
+      segment.sentences.forEach(sentence => {
+        $(`#${containerId} .text`).append(`<span data-start="${sentence.start}" data-end="${sentence.end}">${sentence.text} </span>`);
+      });
+      
+      // Highlighting für dieses Video
+      $(`#${containerId} video`).on('timeupdate', function() {
+        const currentTime = this.currentTime;
+        $(`#${containerId} .text span`).removeClass('highlight');
+        
+        $(`#${containerId} .text span`).each(function() {
+          const start = parseFloat($(this).data('start'));
+          const end = parseFloat($(this).data('end'));
+          if (currentTime >= start && currentTime < end) {
+            $(this).addClass('highlight');
+          }
+        });
+      });
+      
+      // Klick auf Sentence für dieses Segment
+      $(`#${containerId}`).on('click', '.text span', function() {
+        const startTime = parseFloat($(this).data('start'));
+        if (!isNaN(startTime)) {
+          const $video = $(`#${containerId} video`)[0];
+          $video.currentTime = startTime;
+          $video.play();
+        }
+      });
+    });
+    
+  } catch (error) {
+    console.error('Fehler beim Laden der Segmente:', error);
+  }
+}
+
+// Klick auf Tag-Link in Sidebar
+$('.tags').on('click', 'a', function(e) {
+  e.preventDefault();
+  const tag = $(this).data('tag');
+  loadSegmentsByTag(tag);
+});
+
+
+
 
   // Video-Inhalt laden
   async function loadVideoContent(videoId) {
