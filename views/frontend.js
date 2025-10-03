@@ -1,4 +1,4 @@
-$(function() { // Dokument bereit
+/* $(function() { // Dokument bereit
   const $uploadBtn = $('#upload-button');
   const $overlay = $('#upload-overlay');
   const $uploadForm = $('#upload-form');
@@ -552,4 +552,4 @@ videos.forEach(video => {
       alert('Netzwerkfehler: ' + error.message);
     }
   });
-});
+}); */

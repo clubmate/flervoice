@@ -1,23 +1,33 @@
-body {
-  display: flex;
-  flex-direction: column;
-  font-family: BlinkMacSystemFont, Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #000000;
-  color: #ffffff;
-  height: 100vh;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #373737; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484848; }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #171717;
-  padding: 10px;
-  border-bottom: 1px solid #2f2f2f;
-}
+body { display: flex; flex-direction: column; font-family: BlinkMacSystemFont, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #000000; color: #ffffff; }
+header { display: flex; justify-content: space-between; align-items: center; background-color: #171717; border-bottom: 1px solid #2f2f2f; padding: 5px 7px; }
+content { display: flex; }
+aside { flex: 1; background-color: #171717; border-right: 1px solid #2f2f2f; }
+main { flex: 5; padding: 20px; height: calc(100dvh - 84px); overflow: overlay; }
 
+button { background: none; border: none; color: #ffffff; font-size: 22px; cursor: pointer; padding: 5px; }
+button .bi { display: block; height: 22px; }
+button:hover { color: #007bff; }
+
+input[type="text"] { background-color: #000000; color: #ffffff; border: 1px solid #2f2f2f; border-radius: 4px; padding: 5px 10px; font-size: 14px; }
+input[type="text"]:focus { outline: none; border-color: #007bff; box-shadow: none; }
+
+header input { width: 300px; }
+
+aside h4 { color: #858585; margin: 0px; padding: 15px; padding-bottom: 10px; }
+aside section { display: flex; flex-direction: column; }
+aside .videos a { display: flex; flex-direction: column; gap: 2px; color: #ffffff; text-decoration: none; padding: 10px 15px; }
+aside .tags a { display: flex; gap: 2px; color: #ffffff; text-decoration: none; padding: 5px 15px; }
+aside a:hover { background-color: #2f2f2f; }
+aside .video-subtitle { color: #858585; font-size: 14px; }
+aside .video-tags { display: flex; align-items: center; gap: 4px; }
+aside .tag-title { flex: 1; color: #ffffff; font-size: 14px; }
+
+/* 
 content {
   display: flex;
   flex: 1;
@@ -219,4 +229,4 @@ main {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-}
+} */
