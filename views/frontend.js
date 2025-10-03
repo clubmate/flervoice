@@ -1,3 +1,108 @@
+// LOAD SIDEBAR VIDEOS
+async function loadVideos() {
+  try {
+    const response = await fetch('/api/video/list');
+    const videos = await response.json();
+      
+    $('#videoList').empty();
+      
+    videos.forEach(video => {
+      const title = video.title.length > 45 ? video.title.substring(0, 45) + '...' : video.title;
+      const $link = $('<a>', {
+        html: `
+          <div class="video-title">${title.toUpperCase()}</div>
+          <div class="video-subtitle">${video.uploadDate} &bull; ${video.uploader}</div>
+          <div class="video-tags">${video.videoTags && video.videoTags.length > 0 ? video.videoTags.map(tag => `<span class="pill edit-video-tags" data-id="${video._id}">${tag}</span>`).join('') : `<span class="pill edit-video-tags" data-id="${video._id}">ADD TAG</span>`}</div>
+        `
+      });
+  
+      // CLICK-EVENT FOR TAGS AND LOADING VIDEO CONTENT
+      $link.on('click', function(e) {
+        if ($(e.target).hasClass('edit-video-tags')) {
+          e.preventDefault();
+          const videoId = $(e.target).data('id');
+          const currentTags = video.videoTags ? video.videoTags.join(', ') : '';
+          Swal.fire({
+            title: 'EDIT VIDEO-TAGS',
+            input: 'text',
+            inputValue: currentTags,
+            inputPlaceholder: 'TAGS',
+            showCancelButton: true,
+            confirmButtonText: 'SAVE',
+            cancelButtonText: 'CANCEL',
+          }).then((result) => {
+            if (result.isConfirmed && result.value !== null) {
+              const tags = result.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+              fetch(`/api/video/update-video-tags/${videoId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoTags: tags })
+              }).then(() => { 
+                loadVideos(); 
+              });
+            }
+          });
+        } else {
+          loadVideoContent(video._id);
+        }
+      });
+      $('#videoList').append($link);
+    });
+  } catch (error) {
+    console.error('Fehler beim Laden der Videos:', error);
+  }
+}
+
+// LOAD SIDEBAR TAGS
+async function loadTags() {
+  try {
+    const response = await fetch('/api/video/tags');
+    const tags = await response.json();
+      
+    $('#tagList').empty();
+      
+    tags.forEach(({ tag, count }) => {
+      const $tag = $('<a>', {
+        'data-tag': tag,
+        html: `<span class="tag-title">${tag}</span><span class="pill">${count}</span>`
+      });
+
+      // CLICK-EVENT FOR TAGS
+      $tag.on('click', function(e) {
+        e.preventDefault();
+        const tag = $(this).data('tag');
+        loadSegmentsByTag(tag);
+      });
+
+      $('#tagList').append($tag);
+    });
+  } catch (error) {
+      console.error('Fehler beim Laden der Tags:', error);
+  }
+}
+
+
+
+
+// ON LOAD
+$(function() {
+
+  // EXPAND SIDEBAR
+  $('#expand-button').on('click', function() {
+    $('aside').toggleClass('collapsed');
+  });
+
+  loadVideos();
+  loadTags();
+    
+});
+
+
+
+
+
+
+
 /* $(function() { // Dokument bereit
   const $uploadBtn = $('#upload-button');
   const $overlay = $('#upload-overlay');
@@ -5,81 +110,9 @@
   const $fileInput = $('#file-input');
   const $jsonInput = $('#json-input');
 
-  // Videos laden und Liste befüllen
-  async function loadVideos() {
-    try {
-      const response = await fetch('/api/video/list');
-      const videos = await response.json();
-      
-      const $videosSection = $('.videos');
-      $videosSection.empty(); // Bestehende Liste leeren
-      
-videos.forEach(video => {
-  const $link = $('<a>', {
-    href: '#',
-    html: `
-      <div class="video-title">${video.title.toUpperCase()}</div>
-      <div class="video-subtitle">${video.uploadDate} &bull; ${video.uploader}</div>
-      <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}       <i class="bi bi-plus-circle-fill edit-video-tags" data-id="${video._id}"></i></div>
-    `
-  });
-  $link.on('click', function(e) {
-    if ($(e.target).hasClass('edit-video-tags')) {
-      e.preventDefault();
-      const videoId = $(e.target).data('id');
-      const currentTags = video.videoTags ? video.videoTags.join(', ') : '';
-      Swal.fire({
-        title: 'Video-Tags bearbeiten',
-        input: 'text',
-        inputValue: currentTags,
-        inputPlaceholder: 'Tags durch Komma trennen',
-        showCancelButton: true,
-        confirmButtonText: 'Speichern',
-        cancelButtonText: 'Abbrechen'
-      }).then((result) => {
-        if (result.isConfirmed && result.value !== null) {
-          const tags = result.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-          fetch(`/api/video/update-video-tags/${videoId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoTags: tags })
-          }).then(() => {
-            loadVideos(); // UI neu laden
-          });
-        }
-      });
-    } else {
-      loadVideoContent(video._id);
-    }
-  });
-  $videosSection.append($link);
-});
-    } catch (error) {
-      console.error('Fehler beim Laden der Videos:', error);
-    }
-  }
 
-  // Tags laden und in Sidebar anzeigen
-  async function loadTags() {
-    try {
-      const response = await fetch('/api/video/tags');
-      const tags = await response.json();
-      
-      const $tagsSection = $('.tags');
-      $tagsSection.empty(); // Bestehende Tags leeren
-      
-      tags.forEach(({ tag, count }) => {
-        const $link = $('<a>', {
-          href: '#',
-          'data-tag': tag, // Tag speichern
-          html: `<span class="tag-title">${tag}</span><span class="pill">${count}</span>`
-        });
-        $tagsSection.append($link);
-      });
-    } catch (error) {
-      console.error('Fehler beim Laden der Tags:', error);
-    }
-  }
+
+ 
 
   // Gemeinsame Funktion zum Rendern eines Segments
   function renderSegment($container, segment, videoId, segmentIndex) {
@@ -168,12 +201,7 @@ videos.forEach(video => {
     }
   }
 
-  // Klick auf Tag-Link in Sidebar
-  $('.tags').on('click', 'a', function(e) {
-    e.preventDefault();
-    const tag = $(this).data('tag');
-    loadSegmentsByTag(tag);
-  });
+
 
   // Video-Inhalt laden
   async function loadVideoContent(videoId) {
@@ -511,9 +539,7 @@ videos.forEach(video => {
     });
   });
 
-  // Videos beim Laden laden
-  loadVideos();
-  loadTags();
+
 
   // Overlay öffnen
   $uploadBtn.on('click', function() {

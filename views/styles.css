@@ -6,7 +6,7 @@
 body { display: flex; flex-direction: column; font-family: BlinkMacSystemFont, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #000000; color: #ffffff; }
 header { display: flex; justify-content: space-between; align-items: center; background-color: #171717; border-bottom: 1px solid #2f2f2f; padding: 5px 7px; }
 content { display: flex; }
-aside { flex: 1; background-color: #171717; border-right: 1px solid #2f2f2f; }
+aside { display: flex; flex-direction: column; justify-content: space-between; flex: 1; height: calc(100dvh - 44px); background-color: #171717; border-right: 1px solid #2f2f2f; }
 main { flex: 5; padding: 20px; height: calc(100dvh - 84px); overflow: overlay; }
 
 button { background: none; border: none; color: #ffffff; font-size: 22px; cursor: pointer; padding: 5px; }
@@ -18,14 +18,23 @@ input[type="text"]:focus { outline: none; border-color: #007bff; box-shadow: non
 
 header input { width: 300px; }
 
-aside h4 { color: #858585; margin: 0px; padding: 15px; padding-bottom: 10px; }
+aside.collapsed { display: none; }
+aside #videoWrapper { flex: 4; overflow: hidden; }
+aside #tagWrapper { flex: 1; overflow: hidden; }
+aside h4 { color: #858585; margin: 0px; padding: 15px; padding-bottom: 5px; font-size: 20px; }
 aside section { display: flex; flex-direction: column; }
-aside .videos a { display: flex; flex-direction: column; gap: 2px; color: #ffffff; text-decoration: none; padding: 10px 15px; }
-aside .tags a { display: flex; gap: 2px; color: #ffffff; text-decoration: none; padding: 5px 15px; }
+aside #videoList, aside #tagList { height: calc(100% - 43px); overflow: overlay; }
+aside #videoList a { display: flex; flex-direction: column; gap: 2px; color: #ffffff; text-decoration: none; padding: 10px 15px; cursor: pointer; }
+aside #tagList a { display: flex; gap: 2px; color: #ffffff; text-decoration: none; padding: 5px 15px; cursor: pointer; }
 aside a:hover { background-color: #2f2f2f; }
-aside .video-subtitle { color: #858585; font-size: 14px; }
-aside .video-tags { display: flex; align-items: center; gap: 4px; }
-aside .tag-title { flex: 1; color: #ffffff; font-size: 14px; }
+aside .video-title { font-weight: bold; }
+aside .video-subtitle { color: #858585; font-size: 14px; margin-bottom: 3px; }
+aside .video-tags { display: flex; align-items: center; gap: 4px; line-height: 11px; }
+aside .tag-title { font-weight: bold; flex: 1; text-transform: uppercase; color: #ffffff; }
+
+
+.pill { cursor: pointer; background-color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 10px; width: fit-content; }
+.pill.speaker { background-color: #ab8000; }
 
 /* 
 content {
@@ -91,19 +100,7 @@ aside .tag-title {
   font-size: 14px;
 }
 
-.pill {
-  cursor: pointer;
-  background-color: #007bff;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.8em;
-  width: fit-content;
-}
 
-.pill.speaker {
-  background-color: #ab8000;
-}
 
 main {
   display: flex;
