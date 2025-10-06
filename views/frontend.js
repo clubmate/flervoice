@@ -151,6 +151,12 @@ async function loadVideoContent(videoId) {
     const response = await fetch(`/api/video/show/${videoId}`);
     const video = await response.json();
 
+    // HERVORHEBUNG SETZEN
+    $('#videoList a').removeClass('active');
+    $('#videoList a').filter(function() {
+      return $(this).find(`[data-id="${videoId}"]`).length > 0;
+    }).addClass('active');
+
     $('main').empty();
     const $group = $('<section>');
     
