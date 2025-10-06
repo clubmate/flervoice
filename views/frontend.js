@@ -81,16 +81,133 @@ async function loadTags() {
   }
 }
 
+// UPLOAD VIDEO
+function uploadVideo() {
+  Swal.fire({
+    title: 'UPLOAD VIDEO',
+    html: `
+      <input type="file" id="mp4-file" accept=".mp4">
+      <label for="mp4-file">MP4-FILE</label><br>
+      <input type="file" id="json-file" accept=".json">
+      <label for="json-file">JSON-FILE</label>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'UPLOAD',
+    cancelButtonText: 'CANCEL',
+    preConfirm: () => {
+      const mp4 = document.getElementById('mp4-file').files[0];
+      const json = document.getElementById('json-file').files[0];
+      if (!mp4 || !json) {
+        Swal.showValidationMessage('Beide Dateien (MP4 und JSON) sind erforderlich');
+        return false;
+      }
+      return { mp4, json };
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const formData = new FormData();
+      formData.append('mp4', result.value.mp4);
+      formData.append('json', result.value.json);
+      
+      fetch('/api/video/upload', {
+        method: 'POST',
+        body: formData
+      }).then(response => {
+        if (response.ok) {
+          Swal.fire('Erfolg', 'Dateien erfolgreich hochgeladen!', 'success');
+          loadVideos(); // Liste neu laden
+        } else {
+          Swal.fire('Fehler', 'Upload fehlgeschlagen: ' + response.statusText, 'error');
+        }
+      }).catch(error => {
+        Swal.fire('Fehler', 'Netzwerkfehler: ' + error.message, 'error');
+      });
+    }
+  });
+}
 
+// SEGMENT RENDERING
+function renderSegment($container, segment, videoId, segmentIndex) {
+  $container.attr('data-video-id', videoId);
+  $container.attr('data-segment-index', segmentIndex);
+  
+  // SPEAKER + TAGS
+  $container.append(`<div class="tags"></div>`);
+  $container.find('.tags').append(`<span class="pill speaker">${segment.speaker}</span>`);
+  segment.tags.forEach(tag => {
+    $container.find('.tags').append(`<span class="pill">${tag}</span>`);
+  });
+  
+  // SENTENCES
+  $container.append(`<div class="text"></div>`);
+  segment.sentences.forEach(sentence => {
+    $container.find('.text').append(`<span data-start="${sentence.start}" data-end="${sentence.end}">${sentence.text} </span>`);
+  });
+}
 
+// LOAD VIDEO CONTENT
+async function loadVideoContent(videoId) {
+  try {
+    const response = await fetch(`/api/video/show/${videoId}`);
+    const video = await response.json();
+
+    $('main').empty();
+    const $group = $('<section>');
+    
+    // VIDEO-PLAYER
+    $group.append(`
+      <div class="video-player">
+        <video controls>
+          <source src="/media/${video.filename}" type="video/mp4">
+        </video>
+        <div class="video-info">
+          <strong>${video.title}</strong>
+          <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
+        </div>
+      </div>
+    `);
+
+    // TEXT HIGHLIGHTING FOR VIDEO
+    const $video = $('.video-player video')[0];
+    if ($video) {
+      $video.addEventListener('timeupdate', function() {
+        const currentTime = this.currentTime;
+        $('.video-segment .text span').removeClass('highlight');
+        
+        $('.video-segment .text span').each(function() {
+          const start = parseFloat($(this).data('start'));
+          const end = parseFloat($(this).data('end'));
+          if (currentTime >= start && currentTime < end) {
+            $(this).addClass('highlight');
+          }
+        });
+      });
+    }
+    
+    // SEGMENTS
+    const $segments = $('<div class="video-segment">');
+    video.transcription.segments.forEach((segment, index) => {
+      const $container = $('<section>');
+      renderSegment($container, segment, videoId, index);
+      $segments.append($container);
+    });
+    $group.append($segments);
+    
+    $('main').append($group);
+
+  } catch (error) {
+    console.error('Fehler beim Laden des Video-Inhalts:', error);
+  }
+}
 
 // ON LOAD
 $(function() {
 
   // EXPAND SIDEBAR
-  $('#expand-button').on('click', function() {
-    $('aside').toggleClass('collapsed');
-  });
+  $('#expand-button').on('click', function() { $('aside').toggleClass('collapsed'); });
+
+  // UPLOAD VIDEO
+  $('#upload-button').on('click', function() { uploadVideo();});
 
   loadVideos();
   loadTags();
