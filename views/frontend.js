@@ -135,8 +135,11 @@ function renderSegment($container, segment, videoId, segmentIndex) {
   $container.append(`<div class="tags"></div>`);
   $container.find('.tags').append(`<span class="pill speaker">${segment.speaker}</span>`);
   segment.tags.forEach(tag => {
-    $container.find('.tags').append(`<span class="pill">${tag}</span>`);
+    $container.find('.tags').append(`<span class="pill tag">${tag}</span>`);
   });
+  if (segment.tags.length === 0) {
+    $container.find('.tags').append(`<span class="pill tag add">ADD TAGS</span>`);
+  }
   
   // SENTENCES
   $container.append(`<div class="text"></div>`);
@@ -163,10 +166,10 @@ async function loadVideoContent(videoId) {
     // VIDEO-PLAYER
     $group.append(`
       <div class="video-player">
-        <video controls>
-          <source src="/media/${video.filename}" type="video/mp4">
-        </video>
         <div class="video-info">
+          <video controls>
+            <source src="/media/${video.filename}" type="video/mp4">
+          </video>
           <strong>${video.title}</strong>
           <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
         </div>
@@ -174,13 +177,13 @@ async function loadVideoContent(videoId) {
     `);
 
     // TEXT HIGHLIGHTING FOR VIDEO
-    const $video = $('.video-player video')[0];
+    const $video = $group.find('video')[0];
     if ($video) {
       $video.addEventListener('timeupdate', function() {
         const currentTime = this.currentTime;
-        $('.video-segment .text span').removeClass('highlight');
+        $group.find('.text span').removeClass('highlight');
         
-        $('.video-segment .text span').each(function() {
+        $group.find('.text span').each(function() {
           const start = parseFloat($(this).data('start'));
           const end = parseFloat($(this).data('end'));
           if (currentTime >= start && currentTime < end) {
@@ -206,6 +209,77 @@ async function loadVideoContent(videoId) {
   }
 }
 
+// EDIT SEGMENT SPEAKER
+function editSegmentSpeaker($pill) {
+  const $container = $pill.closest('[data-video-id]');
+  const videoId = $container.data('video-id');
+  const segmentIndex = $container.data('segment-index');
+  const currentSpeaker = $pill.text();
+  
+  Swal.fire({
+    title: 'EDIT SPEAKER',
+    input: 'text',
+    inputValue: currentSpeaker,
+    inputPlaceholder: 'SPEAKER',
+    showCancelButton: true,
+    confirmButtonText: 'SAVE',
+    cancelButtonText: 'CANCEL'
+  }).then(async (result) => {
+    if (result.isConfirmed && result.value && result.value !== currentSpeaker) {
+      const newSpeaker = result.value.trim();
+      await fetch(`/api/video/update-speaker/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex, newSpeaker })
+      });
+      loadVideoContent(videoId);
+    }
+  });
+}
+
+// EDIT SEGMENT TAGS
+function editSegmentTags($pill) {
+  const $container = $pill.closest('[data-video-id]');
+  const videoId = $container.data('video-id');
+  const segmentIndex = $container.data('segment-index');
+  const $tagsContainer = $container.find('.tags');
+  const isAddTags = $pill.text() === 'ADD TAGS';
+  const currentTags = isAddTags ? '' : $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get().filter(tag => tag !== 'ADD TAGS').join(', ');
+  
+  Swal.fire({
+    title: 'EDIT TAGS',
+    input: 'text',
+    inputValue: currentTags,
+    inputPlaceholder: 'TAGS (comma-separated)',
+    showCancelButton: true,
+    confirmButtonText: 'SAVE',
+    cancelButtonText: 'CANCEL'
+  }).then(async (result) => {
+    if (result.isConfirmed && result.value !== null) {
+      const newTags = result.value.split(',').map(tag => tag.trim().toUpperCase()).filter(tag => tag);
+      
+      // Update Tags
+      const oldTags = $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get();
+      for (const oldTag of oldTags) {
+        await fetch(`/api/video/update-tag/${videoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ segmentIndex, oldTag, deleteTag: true })
+        });
+      }
+      for (const newTag of newTags) {
+        await fetch(`/api/video/add-tag/${videoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ segmentIndex, newTag })
+        });
+      }
+      
+      loadVideoContent(videoId);
+    }
+  });
+}
+
 // ON LOAD
 $(function() {
 
@@ -213,7 +287,13 @@ $(function() {
   $('#expand-button').on('click', function() { $('aside').toggleClass('collapsed'); });
 
   // UPLOAD VIDEO
-  $('#upload-button').on('click', function() { uploadVideo();});
+  $('#upload-button').on('click', function() { uploadVideo(); });
+
+  // EDIT SEGMENT SPEAKER
+  $('main').on('click', '.pill.speaker', function() { editSegmentSpeaker($(this)); });
+
+  // EDIT SEGMENT TAGS
+  $('main').on('click', '.pill.tag', function() { editSegmentTags($(this)); });
 
   loadVideos();
   loadTags();

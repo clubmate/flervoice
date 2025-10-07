@@ -48,14 +48,18 @@ aside .tag-title { font-weight: bold; flex: 1; text-transform: uppercase; color:
 main section { display: flex; gap: 20px; }
 main .video-player { flex: 1; }
 main .video-player video { width: 100% }
+main .video-info { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0px;}
+main .video-tags { display: flex; gap: 5px; }
 main .video-segment { flex: 3; display: flex; flex-direction: column; gap: 30px; }
 main .tags { flex: 1; display: flex; flex-direction: column; align-items: end; flex-wrap: wrap; gap: 10px; height: min-content; padding-top: 8px;}
-main .tags .pill { font-size: 14px !important; }
+main .tags .pill { font-size: 12px; }
+main .tags .pill.add { background-color: #2f2f2f; }
+main .tags .speaker { font-size: 14px; background-color: #ab8000; margin-bottom: 10px; font-weight: bold; line-height: 16px; }
 main .text { flex: 8; }
 main .text .highlight { color: #72bdff; }
 
 .pill { cursor: pointer; background-color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 10px; width: fit-content; }
-.pill.speaker { background-color: #ab8000; margin-bottom: 10px; font-weight: bold; }
+
 
 /* 
 content {

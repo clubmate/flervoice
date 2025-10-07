@@ -241,6 +241,26 @@ router.put('/update-tag/:id', async (req, res) => {
   }
 });
 
+// UPDATE SPEAKER FOR A SEGMENT
+router.put('/update-speaker/:id', async (req, res) => {
+  try {
+    const { segmentIndex, newSpeaker } = req.body;
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+    if (segmentIndex < 0 || segmentIndex >= videoData.transcription.segments.length) {
+      return res.status(400).json({ message: 'Invalid segment index' });
+    }
+    videoData.transcription.segments[segmentIndex].speaker = newSpeaker;
+    await videoData.save();
+    res.status(200).json({ message: 'Speaker updated successfully' });
+  } catch (error) {
+    console.error('Error updating speaker:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // GET SEGMENTS BY TAG FROM ALL VIDEOS
 router.get('/search-segments-by-tag/:tag', async (req, res) => {
   try {
