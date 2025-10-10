@@ -226,12 +226,15 @@ function editSegmentSpeaker($pill) {
     cancelButtonText: 'CANCEL'
   }).then(async (result) => {
     if (result.isConfirmed && result.value && result.value !== currentSpeaker) {
-      const newSpeaker = result.value.trim();
+      const newSpeaker = result.value.trim().toUpperCase();
+      
+      // Ändere den Speaker (Endpoint übernimmt Merging)
       await fetch(`/api/video/update-speaker/${videoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ segmentIndex, newSpeaker })
       });
+      
       loadVideoContent(videoId);
     }
   });
@@ -280,6 +283,52 @@ function editSegmentTags($pill) {
   });
 }
 
+// SPLIT SEGMENT
+function splitSegment($span) {
+  const $container = $span.closest('[data-video-id]');
+  const videoId = $container.data('video-id');
+  const segmentIndex = $container.data('segment-index');
+  const sentenceIndex = $span.index();
+  
+  // Hole die Transcription, um den vorherigen Speaker zu prüfen
+  fetch(`/api/video/show/${videoId}`)
+    .then(response => response.json())
+    .then(video => {
+      const segments = video.transcription.segments;
+      const previousSpeaker = segmentIndex > 0 ? segments[segmentIndex - 1].speaker : null;
+      
+      Swal.fire({
+        title: 'SPLIT SEGMENT',
+        input: 'text',
+        inputPlaceholder: 'SPEAKER',
+        showCancelButton: true,
+        confirmButtonText: 'SAVE',
+        cancelButtonText: 'CANCEL'
+      }).then((result) => {
+        if (result.isConfirmed && result.value) {
+          const newSpeaker = result.value.trim().toUpperCase();
+          
+          // Spezialfall: Wenn neuer Speaker gleich dem vorherigen ist, nicht splitten
+          if (previousSpeaker && newSpeaker === previousSpeaker) {
+            Swal.fire('Info', 'SAME SPEAKER LIKE SEGMENT BEFORE', 'info');
+            return;
+          }
+          
+          fetch(`/api/video/update-transcription/${videoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ segmentIndex, sentenceIndex, newSpeaker })
+          }).then(() => {
+            loadVideoContent(videoId);
+          });
+        }
+      });
+    })
+    .catch(error => {
+      console.error('Fehler beim Laden der Transcription:', error);
+    });
+}
+
 // ON LOAD
 $(function() {
 
@@ -294,6 +343,9 @@ $(function() {
 
   // EDIT SEGMENT TAGS
   $('main').on('click', '.pill.tag', function() { editSegmentTags($(this)); });
+
+  // SPLIT SEGMENT
+  $('main').on('contextmenu', '.text span', function(e) { e.preventDefault(); splitSegment($(this)); });
 
   loadVideos();
   loadTags();

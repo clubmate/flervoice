@@ -57,6 +57,7 @@ main .tags .pill.add { background-color: #2f2f2f; }
 main .tags .speaker { font-size: 14px; background-color: #ab8000; margin-bottom: 10px; font-weight: bold; line-height: 16px; }
 main .text { flex: 8; }
 main .text .highlight { color: #72bdff; }
+main .text span:hover { color: #87aac8; }
 
 .pill { cursor: pointer; background-color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 10px; width: fit-content; }
 

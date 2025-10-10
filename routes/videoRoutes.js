@@ -70,8 +70,8 @@ router.put('/update-transcription/:id', async (req, res) => {
     }
     
     // Split the sentences
-    const beforeSentences = segment.sentences.slice(0, sentenceIndex + 1);
-    const afterSentences = segment.sentences.slice(sentenceIndex + 1);
+    const beforeSentences = segment.sentences.slice(0, sentenceIndex);
+    const afterSentences = segment.sentences.slice(sentenceIndex);
     
     // Update the current segment with before sentences
     segment.sentences = beforeSentences;
@@ -244,19 +244,40 @@ router.put('/update-tag/:id', async (req, res) => {
 // UPDATE SPEAKER FOR A SEGMENT
 router.put('/update-speaker/:id', async (req, res) => {
   try {
-    const { segmentIndex, newSpeaker } = req.body;
+    let { segmentIndex, newSpeaker } = req.body;
+    
     const videoData = await video.findById(req.params.id);
     if (!videoData) {
-      return res.status(404).json({ message: 'Video not found' });
+      return res.status(404).json({ message: 'Video nicht gefunden' });
     }
-    if (segmentIndex < 0 || segmentIndex >= videoData.transcription.segments.length) {
-      return res.status(400).json({ message: 'Invalid segment index' });
+    
+    const segments = videoData.transcription.segments;
+    if (segmentIndex >= segments.length) {
+      return res.status(400).json({ message: 'Ungültiger Segment-Index' });
     }
-    videoData.transcription.segments[segmentIndex].speaker = newSpeaker;
-    await videoData.save();
-    res.status(200).json({ message: 'Speaker updated successfully' });
+    
+    // Ändere den Speaker
+    segments[segmentIndex].speaker = newSpeaker;
+    
+    // Mergen mit vorherigem Segment, wenn Speaker gleich
+    if (segmentIndex > 0 && segments[segmentIndex - 1].speaker === newSpeaker) {
+      segments[segmentIndex - 1].sentences = segments[segmentIndex - 1].sentences.concat(segments[segmentIndex].sentences);
+      segments.splice(segmentIndex, 1);
+      segmentIndex--; // Index anpassen
+    }
+    
+    // Mergen mit nächstem Segment, wenn Speaker gleich
+    if (segmentIndex + 1 < segments.length && segments[segmentIndex + 1].speaker === newSpeaker) {
+      segments[segmentIndex].sentences = segments[segmentIndex].sentences.concat(segments[segmentIndex + 1].sentences);
+      segments.splice(segmentIndex + 1, 1);
+    }
+    
+    // Speichere
+    await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
+    
+    res.status(200).json({ message: 'Speaker aktualisiert und gemergt' });
   } catch (error) {
-    console.error('Error updating speaker:', error);
+    console.log(`Error in /update-speaker/:id: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 });
