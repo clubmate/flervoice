@@ -117,15 +117,20 @@ router.put('/update-sentence/:id', async (req, res) => {
     sentence.text = newText;
     const newWords = newText.split(' ');
     
-    // Words-Array aktualisieren: Versuche, bestehende Timestamps zu erhalten
-    sentence.words = newWords.map((word, index) => {
-      const existingWord = words[index];
-      return {
-        start: existingWord ? existingWord.start : 0,
-        end: existingWord ? existingWord.end : 0,
-        word: word
-      };
+    // Map für bestehende Timestamps erstellen (Wort zu Timestamp)
+    const wordMap = {};
+    words.forEach(w => {
+      if (!wordMap[w.word]) {
+        wordMap[w.word] = { start: w.start, end: w.end };
+      }
     });
+    
+    // Words-Array aktualisieren: Timestamps für übereinstimmende Wörter behalten, neue bekommen 0
+    sentence.words = newWords.map(word => ({
+      word: word,
+      start: wordMap[word] ? wordMap[word].start : 0,
+      end: wordMap[word] ? wordMap[word].end : 0
+    }));
     
     // DB aktualisieren
     await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });

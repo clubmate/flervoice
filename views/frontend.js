@@ -329,6 +329,70 @@ function splitSegment($span) {
     });
 }
 
+// JUMP TO SENTENCE TIME
+function jumpToSentenceTime($span) {
+  const $group = $span.parents('section').eq(1);
+  const $video = $group.find('video')[0];
+  if ($video) {
+    const startTime = parseFloat($span.data('start'));
+    if (!isNaN(startTime)) {
+      $video.currentTime = startTime;
+      $video.play();
+    }
+  }
+}
+
+// EDIT SENTENCE TEXT
+function editSentenceText($span) {
+  const $group = $span.parents('section').eq(1);
+  const $video = $group.find('video')[0];
+  const $container = $span.closest('[data-video-id]');
+  const videoId = $container.data('video-id');
+  const segmentIndex = $container.data('segment-index');
+  const sentenceIndex = $span.index();
+  const startTime = parseFloat($span.data('start'));
+  const endTime = parseFloat($span.data('end'));
+  const originalText = $span.text().trim();
+  
+  const currentTimeBefore = $video ? $video.currentTime : 0;
+  const wasPlaying = $video ? !$video.paused : false;
+  
+  $video.currentTime = startTime;
+  let loopActive = true;
+  const loopHandler = () => {
+    if (loopActive && $video.currentTime >= endTime) {
+      $video.currentTime = startTime;
+    }
+  };
+  $video.addEventListener('timeupdate', loopHandler);
+    
+  Swal.fire({
+    title: 'EDIT SENTENCE',
+    input: 'text',
+    inputValue: originalText,
+    inputPlaceholder: 'NEW TEXT',
+    showCancelButton: true,
+    confirmButtonText: 'SAVE',
+    cancelButtonText: 'CANCEL',
+    willClose: () => {
+      loopActive = false;
+      $video.removeEventListener('timeupdate', loopHandler);
+    }
+    }).then(async (result) => {
+      if (result.isConfirmed && result.value && result.value !== originalText) {
+        const newText = result.value.trim();
+        const newWords = newText.split(' ').filter(word => word);
+        await fetch(`/api/video/update-sentence/${videoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ segmentIndex, sentenceIndex, newText, newWords })
+        });
+        
+        $span.text(newText + ' ');
+      }
+    });
+}
+
 // ON LOAD
 $(function() {
 
@@ -344,8 +408,14 @@ $(function() {
   // EDIT SEGMENT TAGS
   $('main').on('click', '.pill.tag', function() { editSegmentTags($(this)); });
 
+  // JUMP TO SENTENCE TIME
+  $('main').on('click', '.text span', function() { jumpToSentenceTime($(this)); });
+
   // SPLIT SEGMENT
   $('main').on('contextmenu', '.text span', function(e) { e.preventDefault(); splitSegment($(this)); });
+
+  // EDIT SENTENCE TEXT
+  $('main').on('dblclick', '.text span', function() { editSentenceText($(this)); });
 
   loadVideos();
   loadTags();
