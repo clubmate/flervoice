@@ -19,9 +19,11 @@ body { display: flex; flex-direction: column; font-family: BlinkMacSystemFont, H
 header { display: flex; justify-content: space-between; align-items: center; background-color: #171717; border-bottom: 1px solid #2f2f2f; padding: 5px 7px; }
 content { display: flex; }
 aside { display: flex; flex-direction: column; justify-content: space-between; flex: 1; height: calc(100dvh - 44px); background-color: #171717; border-right: 1px solid #2f2f2f; }
-main { flex: 5; padding: 20px; height: calc(100dvh - 84px); overflow: overlay; font-size: 30px;}
+main { display: flex; flex-direction: column; gap: 100px; flex: 5; padding: 20px; height: calc(100dvh - 84px); overflow: overlay; font-size: 30px;}
 
 button { background: none; border: none; color: #ffffff; font-size: 22px; cursor: pointer; padding: 5px; }
+button:disabled { opacity: 0.2; }
+button:disabled:hover { color: #ffffff !important; cursor: default; }
 button .bi { display: block; height: 22px; }
 button:hover:not(.swal2-styled) { color: #007bff; }
 

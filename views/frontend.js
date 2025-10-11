@@ -1,6 +1,7 @@
 let currentVideoId = null;
 let currentView = 'normal';
 let currentLoopHandler = null;
+let currentTag = null;
 
 // LOAD SIDEBAR VIDEOS
 async function loadVideos() {
@@ -47,6 +48,8 @@ async function loadVideos() {
             }
           });
         } else {
+          currentTag = null;
+          $('#tagList a').removeClass('active');
           if (currentView === 'normal') {
             loadVideoContent(video._id);
           } else {
@@ -79,11 +82,23 @@ async function loadTags() {
       $tag.on('click', function(e) {
         e.preventDefault();
         const tag = $(this).data('tag');
+        currentTag = tag;
+        $('#tagList a').removeClass('active');
+        $(this).addClass('active');
+        $('#videoList a').removeClass('active'); 
         loadSegmentsByTag(tag);
       });
 
       $('#tagList').append($tag);
     });
+
+    // HERVORHEBUNG SETZEN, FALLS AKTUELLER TAG
+    if (currentTag) {
+      $('#tagList a').filter(function() {
+        return $(this).data('tag') === currentTag;
+      }).addClass('active');
+    }
+
   } catch (error) {
       console.error('Fehler beim Laden der Tags:', error);
   }
@@ -214,6 +229,9 @@ async function loadVideoContent(videoId) {
     
     $('main').append($group);
 
+    // VIEW-TOGGLE AKTIVIEREN IN NORMALER ANSICHT
+    $('#view-toggle').prop('disabled', false);
+
   } catch (error) {
     console.error('Fehler beim Laden des Video-Inhalts:', error);
   }
@@ -251,6 +269,9 @@ async function loadVideoContentTraining(videoId) {
 
     // Initial Sentence laden
     updateTrainingSentence();
+
+    // VIEW-TOGGLE AKTIVIEREN IN TRAINING-ANSICHT
+    $('#view-toggle').prop('disabled', false);
 
   } catch (error) {
     console.error('Fehler beim Laden des Video-Inhalts (Training):', error);
@@ -553,6 +574,84 @@ function editSentenceText($span) {
         $span.text(newText + ' ');
       }
     });
+}
+
+// LOAD SEGMENTS BY TAG
+async function loadSegmentsByTag(tag) {
+  try {
+    const response = await fetch(`/api/video/search-segments-by-tag/${encodeURIComponent(tag)}`);
+    const segments = await response.json();
+    
+    $('main').empty();
+    
+    // Segmente nach Video gruppieren
+    const grouped = segments.reduce((acc, segment) => {
+      if (!acc[segment.videoId]) acc[segment.videoId] = [];
+      acc[segment.videoId].push(segment);
+      return acc;
+    }, {});
+    
+    // Für jede Gruppe rendern
+    Object.values(grouped).forEach(group => {
+      const $group = $('<section>');
+      
+      // VIDEO-PLAYER FÜR DIE GRUPPE
+      $group.append(`
+        <div class="video-player">
+          <div class="video-info">
+            <video controls>
+              <source src="/media/${group[0].videoFilename}" type="video/mp4">
+            </video>
+            <strong>${group[0].videoTitle}</strong>
+            <div class="video-tags">${group[0].videoTags ? group[0].videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
+          </div>
+        </div>
+      `);
+      
+      // SEGMENTS
+      const $segments = $('<div class="video-segment">');
+      group.forEach((segment, index) => {
+        const $container = $('<section>');
+        renderSegment($container, segment, segment.videoId, segment.segmentIndex);
+        $segments.append($container);
+      });
+      $group.append($segments);
+      
+      $('main').append($group);
+    });
+    
+    // HIGHLIGHTING FÜR JEDES VIDEO
+    $('main section video').each(function() {
+      $(this).on('timeupdate', function() {
+        const currentTime = this.currentTime;
+        const $group = $(this).closest('section');
+        $group.find('.text span').removeClass('highlight');
+        
+        $group.find('.text span').each(function() {
+          const start = parseFloat($(this).data('start'));
+          const end = parseFloat($(this).data('end'));
+          if (currentTime >= start && currentTime < end) {
+            $(this).addClass('highlight');
+          }
+        });
+      });
+    });
+
+    // PAUSE ANDERE VIDEOS WENN EINES SPIELT
+    $('main section video').each(function() {
+      $(this).on('play', function() {
+        $('main section video').not(this).each(function() {
+          this.pause();
+        });
+      });
+    });
+
+    // VIEW-TOGGLE DEAKTIVIEREN IN TAG-ANSICHT
+    $('#view-toggle').prop('disabled', true);
+    
+  } catch (error) {
+    console.error('Fehler beim Laden der Segmente:', error);
+  }
 }
 
 
