@@ -14,6 +14,7 @@ async function loadVideos() {
     videos.forEach(video => {
       const title = video.title.length > 45 ? video.title.substring(0, 45) + '...' : video.title;
       const $link = $('<a>', {
+        'data-id': video._id,
         html: `
           <div class="video-title">${title.toUpperCase()}</div>
           <div class="video-subtitle">${video.uploadDate} &bull; ${video.uploader}</div>
@@ -390,6 +391,33 @@ async function updateTrainingSentence() {
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Sentence:', error);
   }
+}
+
+// EDIT VIDEO TITLE
+function editVideoTitle($title) {
+  const $link = $title.closest('a');
+  const videoId = $link.data('id');
+  const currentTitle = $title.text().toLowerCase();
+
+  Swal.fire({
+    title: 'EDIT VIDEO TITLE',
+    input: 'text',
+    inputValue: currentTitle,
+    inputPlaceholder: 'NEW TITLE',
+    showCancelButton: true,
+    confirmButtonText: 'SAVE',
+    cancelButtonText: 'CANCEL'
+  }).then(async (result) => {
+    if (result.isConfirmed && result.value && result.value !== currentTitle) {
+      const newTitle = result.value.trim();
+      await fetch(`/api/video/update-title/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newTitle })
+      });
+      loadVideos(); // Liste neu laden
+    }
+  });
 }
 
 // EDIT SEGMENT SPEAKER
@@ -786,6 +814,9 @@ $(function() {
 
   // EDIT SENTENCE TEXT
   $('main').on('dblclick', '.text span', function() { editSentenceText($(this)); });
+
+  // EDIT VIDEO TITLE ON DOUBLE CLICK
+  $('#videoList').on('dblclick', '.video-title', function(e) { e.preventDefault(); editVideoTitle($(this)); });
 
   // SEARCH
   $('#search-input').on('keypress', function(e) {

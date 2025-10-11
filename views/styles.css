@@ -52,7 +52,7 @@ aside .tag-title { font-weight: bold; flex: 1; text-transform: uppercase; color:
 main section { display: flex; gap: 20px; }
 main .video-player { flex: 1; }
 main .video-player video { width: 100% }
-main .video-info { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0px;}
+main .video-info { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0px; text-transform: uppercase; }
 main .video-tags { display: flex; gap: 5px; }
 main .video-segment { flex: 3; display: flex; flex-direction: column; gap: 30px; }
 main .tags { flex: 1; display: flex; flex-direction: column; align-items: end; flex-wrap: wrap; gap: 10px; height: min-content; padding-top: 8px;}

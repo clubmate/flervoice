@@ -362,7 +362,20 @@ router.get('/search-segments/:query', async (req, res) => {
   }
 });
 
-
+// UPDATE VIDEO TITLE
+router.put('/update-title/:id', async (req, res) => {
+  try {
+    const { newTitle } = req.body;
+    const videoData = await video.findByIdAndUpdate(req.params.id, { title: newTitle }, { new: true });
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    res.status(200).json({ message: 'Titel aktualisiert' });
+  } catch (error) {
+    console.log(`Error in /update-title/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 
 // Funktion zum Bereinigen des Filenames
