@@ -26,6 +26,7 @@ button:disabled { opacity: 0.2; }
 button:disabled:hover { color: #ffffff !important; cursor: default; }
 button .bi { display: block; height: 22px; }
 button:hover:not(.swal2-styled) { color: #007bff; }
+mark { background-color: #007bff; color: #ffffff; }
 
 input[type="text"] { background-color: #000000; color: #ffffff; border: 1px solid #2f2f2f; border-radius: 4px; padding: 5px 10px; font-size: 14px; }
 input[type="text"]:focus { outline: none; border-color: #007bff; box-shadow: none; }

@@ -654,6 +654,100 @@ async function loadSegmentsByTag(tag) {
   }
 }
 
+// LOAD SEGMENTS BY SEARCH
+async function loadSegmentsBySearch(query) {
+  try {
+    const response = await fetch(`/api/video/search-segments/${encodeURIComponent(query)}`);
+    const segments = await response.json();
+    
+    $('main').empty();
+
+    // Hervorhebungen entfernen
+    $('#videoList a').removeClass('active');
+    $('#tagList a').removeClass('active');
+    currentVideoId = null;
+    currentTag = null;
+    
+    // Segmente nach Video gruppieren
+    const grouped = segments.reduce((acc, segment) => {
+      if (!acc[segment.videoId]) acc[segment.videoId] = [];
+      acc[segment.videoId].push(segment);
+      return acc;
+    }, {});
+    
+    // Für jede Gruppe rendern
+    Object.values(grouped).forEach(group => {
+      const $group = $('<section>');
+      
+      // VIDEO-PLAYER FÜR DIE GRUPPE
+      $group.append(`
+        <div class="video-player">
+          <div class="video-info">
+            <video controls>
+              <source src="/media/${group[0].videoFilename}" type="video/mp4">
+            </video>
+            <strong>${group[0].videoTitle}</strong>
+            <div class="video-tags">${group[0].videoTags ? group[0].videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
+          </div>
+        </div>
+      `);
+      
+      // SEGMENTS
+      const $segments = $('<div class="video-segment">');
+      group.forEach((segment, index) => {
+        const $container = $('<section>');
+        renderSegment($container, segment, segment.videoId, segment.segmentIndex);
+        
+        // HERVORHEBUNG DES SUCHWORTS
+        $container.find('.text span').each(function() {
+          const span = $(this);
+          const text = span.text();
+          if (text.toLowerCase().includes(query.toLowerCase())) {
+            span.html(text.replace(new RegExp(query, 'gi'), '<mark>$&</mark>'));
+          }
+        });
+        
+        $segments.append($container);
+      });
+      $group.append($segments);
+      
+      $('main').append($group);
+    });
+    
+    // HIGHLIGHTING FÜR JEDES VIDEO
+    $('main section video').each(function() {
+      $(this).on('timeupdate', function() {
+        const currentTime = this.currentTime;
+        const $group = $(this).closest('section');
+        $group.find('.text span').removeClass('highlight');
+        
+        $group.find('.text span').each(function() {
+          const start = parseFloat($(this).data('start'));
+          const end = parseFloat($(this).data('end'));
+          if (currentTime >= start && currentTime < end) {
+            $(this).addClass('highlight');
+          }
+        });
+      });
+    });
+    
+    // PAUSE ANDERE VIDEOS WENN EINES SPIELT
+    $('main section video').each(function() {
+      $(this).on('play', function() {
+        $('main section video').not(this).each(function() {
+          this.pause();
+        });
+      });
+    });
+    
+    // VIEW-TOGGLE DEAKTIVIEREN IN SUCH-ANSICHT
+    $('#view-toggle').prop('disabled', true);
+    
+  } catch (error) {
+    console.error('Fehler beim Laden der Segmente:', error);
+  }
+}
+
 
 // INIT NORMAL VIEW
 function initNormalView() {
@@ -693,6 +787,15 @@ $(function() {
   // EDIT SENTENCE TEXT
   $('main').on('dblclick', '.text span', function() { editSentenceText($(this)); });
 
+  // SEARCH
+  $('#search-input').on('keypress', function(e) {
+    if (e.which === 13) {
+      const query = $(this).val().trim();
+      if (query) {
+        loadSegmentsBySearch(query);
+      }
+    }
+  });
 
   // VIEW TOGGLE
   $('#view-toggle').on('click', function() {

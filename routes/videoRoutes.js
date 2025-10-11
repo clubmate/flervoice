@@ -327,6 +327,40 @@ router.get('/search-segments-by-tag/:tag', async (req, res) => {
   }
 });
 
+// GET SEGMENTS BY SEARCH QUERY FROM ALL VIDEOS
+router.get('/search-segments/:query', async (req, res) => {
+  try {
+    const query = req.params.query.toLowerCase();
+    const videoData = await video.find({}, 'title uploader filename transcription.segments');
+    const matchingSegments = [];
+    const addedSegments = new Set(); // Um Duplikate zu vermeiden
+    
+    videoData.forEach(video => {
+      video.transcription.segments.forEach((segment, segmentIndex) => {
+        const key = `${video._id}-${segmentIndex}`;
+        if (!addedSegments.has(key) && segment.sentences.some(s => s.text.toLowerCase().includes(query))) {
+          matchingSegments.push({
+            videoId: video._id,
+            videoTitle: video.title,
+            videoTags: video.videoTags,
+            videoUploader: video.uploader,
+            videoFilename: video.filename,
+            segmentIndex,
+            speaker: segment.speaker,
+            tags: segment.tags,
+            sentences: segment.sentences // Komplettes Segment
+          });
+          addedSegments.add(key);
+        }
+      });
+    });
+    
+    res.status(200).json(matchingSegments);
+  } catch (error) {
+    console.log(`Error in /search-segments/:query: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 
 
