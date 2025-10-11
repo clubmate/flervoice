@@ -45,6 +45,7 @@ aside .video-subtitle { color: #858585; font-size: 14px; margin-bottom: 3px; }
 aside .video-tags { display: flex; align-items: center; gap: 4px; line-height: 11px; }
 aside .tag-title { font-weight: bold; flex: 1; text-transform: uppercase; color: #ffffff; }
 
+/* NORMAL VIEW */
 main section { display: flex; gap: 20px; }
 main .video-player { flex: 1; }
 main .video-player video { width: 100% }
@@ -58,6 +59,22 @@ main .tags .speaker { font-size: 14px; background-color: #ab8000; margin-bottom:
 main .text { flex: 8; }
 main .text span:hover { color: #87aac8; }
 main .text .highlight { color: #72bdff; }
+
+/* TRAINING VIEW */
+main section.training { height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 50px;}
+main section.training .video-info { align-items: center; gap: 20px; }
+main section.training .video-count { display: flex; gap: 20px; font-size: 20px; }
+main section.training .video-player { flex: none; }
+main section.training .video-player video { width: 480px; }
+main section.training .video-sentence { display: flex; flex-direction: column; gap: 20px; width: 80% }
+main section.training .video-sentence textarea { background: #000000; color: #ffffff; border: none; resize: none; outline: none; font-size: 50px; font-family: BlinkMacSystemFont; text-align: center; }
+main section.training .video-sentence #save-sentence { width: 100%; font-size: 50px;}
+main section.training .video-sentence #save-sentence:disabled { opacity: 0; }
+main section.training .video-sentence .training-buttons { margin-top: 120px; display: flex; justify-content: center; gap: 20px; }
+main section.training .video-sentence .training-buttons button { display: flex; gap: 10px; justify-content: center; font-size: 30px; font-weight: bold; padding: 20px; border-radius: 6px; width: 200px; }
+main section.training .video-sentence .training-buttons button:hover { color: #ffffff; }
+main section.training .video-sentence .training-buttons #training-good { background-color: #007bff; }
+main section.training .video-sentence .training-buttons #training-bad { background-color: #2f2f2f; }
 
 .pill { cursor: pointer; background-color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 10px; width: fit-content; }
 

@@ -99,7 +99,8 @@ router.put('/update-transcription/:id', async (req, res) => {
 // UPDATE SENTENCE TEXT AND WORDS
 router.put('/update-sentence/:id', async (req, res) => {
   try {
-    const { segmentIndex, sentenceIndex, newText } = req.body;
+    const { segmentIndex, sentenceIndex, newText, newWords, training } = req.body;
+    
     const videoData = await video.findById(req.params.id);
     if (!videoData) {
       return res.status(404).json({ message: 'Video nicht gefunden' });
@@ -113,24 +114,31 @@ router.put('/update-sentence/:id', async (req, res) => {
     const sentence = segments[segmentIndex].sentences[sentenceIndex];
     const words = sentence.words || [];
     
-    // Neuer Text und Words generieren
-    sentence.text = newText;
-    const newWords = newText.split(' ');
+    // Neuer Text und Words generieren, falls newText vorhanden
+    if (newText) {
+      sentence.text = newText;
+      const newWordsArray = newText.split(' ');
+      
+      // Map für bestehende Timestamps erstellen (Wort zu Timestamp)
+      const wordMap = {};
+      words.forEach(w => {
+        if (!wordMap[w.word]) {
+          wordMap[w.word] = { start: w.start, end: w.end };
+        }
+      });
+      
+      // Words-Array aktualisieren: Timestamps für übereinstimmende Wörter behalten, neue bekommen 0
+      sentence.words = newWordsArray.map(word => ({
+        word: word,
+        start: wordMap[word] ? wordMap[word].start : 0,
+        end: wordMap[word] ? wordMap[word].end : 0
+      }));
+    }
     
-    // Map für bestehende Timestamps erstellen (Wort zu Timestamp)
-    const wordMap = {};
-    words.forEach(w => {
-      if (!wordMap[w.word]) {
-        wordMap[w.word] = { start: w.start, end: w.end };
-      }
-    });
-    
-    // Words-Array aktualisieren: Timestamps für übereinstimmende Wörter behalten, neue bekommen 0
-    sentence.words = newWords.map(word => ({
-      word: word,
-      start: wordMap[word] ? wordMap[word].start : 0,
-      end: wordMap[word] ? wordMap[word].end : 0
-    }));
+    // Training setzen, falls vorhanden
+    if (training !== undefined) {
+      sentence.training = training;
+    }
     
     // DB aktualisieren
     await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });

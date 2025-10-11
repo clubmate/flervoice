@@ -1,3 +1,7 @@
+let currentVideoId = null;
+let currentView = 'normal';
+let currentLoopHandler = null;
+
 // LOAD SIDEBAR VIDEOS
 async function loadVideos() {
   try {
@@ -43,7 +47,11 @@ async function loadVideos() {
             }
           });
         } else {
-          loadVideoContent(video._id);
+          if (currentView === 'normal') {
+            loadVideoContent(video._id);
+          } else {
+            loadVideoContentTraining(video._id);
+          }
         }
       });
       $('#videoList').append($link);
@@ -154,6 +162,8 @@ async function loadVideoContent(videoId) {
     const response = await fetch(`/api/video/show/${videoId}`);
     const video = await response.json();
 
+    currentVideoId = videoId;
+
     // HERVORHEBUNG SETZEN
     $('#videoList a').removeClass('active');
     $('#videoList a').filter(function() {
@@ -206,6 +216,158 @@ async function loadVideoContent(videoId) {
 
   } catch (error) {
     console.error('Fehler beim Laden des Video-Inhalts:', error);
+  }
+}
+
+// LOAD VIDEO CONTENT FOR TRAINING VIEW
+async function loadVideoContentTraining(videoId) {
+  try {
+    const response = await fetch(`/api/video/show/${videoId}`);
+    const video = await response.json();
+
+    currentVideoId = videoId;
+
+    $('main').empty();
+    const $group = $('<section class="training">');
+    
+    // COUNT CONTAINER
+    $group.append(`<div class="video-count"></div>`);
+
+    // VIDEO-PLAYER
+    $group.append(`
+      <div class="video-player">
+        <div class="video-info">
+          <video controls>
+            <source src="/media/${video.filename}" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    `);
+
+    // SENTENCE CONTAINER
+    $group.append(`<div class="video-sentence"></div>`);
+    
+    $('main').append($group);
+
+    // Initial Sentence laden
+    updateTrainingSentence();
+
+  } catch (error) {
+    console.error('Fehler beim Laden des Video-Inhalts (Training):', error);
+  }
+}
+
+// UPDATE TRAINING SENTENCE (ohne Video neu zu laden)
+async function updateTrainingSentence() {
+  try {
+    const response = await fetch(`/api/video/show/${currentVideoId}`);
+    const video = await response.json();
+
+    // Sammle alle Sentences mit Indizes
+    const allSentences = [];
+    let trainingTrue = 0;
+    let trainingFalse = 0;
+    video.transcription.segments.forEach((segment, segmentIndex) => {
+      segment.sentences.forEach((sentence, sentenceIndex) => {
+        if (sentence.training === true) trainingTrue++;
+        else if (sentence.training === false) trainingFalse++;
+        else if (sentence.training === undefined || sentence.training === null) {
+          allSentences.push({ ...sentence, segmentIndex, sentenceIndex });
+        }
+      });
+    });
+
+    // Anzahl anzeigen
+    $('.video-count').html(`<div><i class="bi bi-patch-check-fill"></i> ${trainingTrue}</div><div><i class="bi bi-trash3-fill"></i> ${trainingFalse}</div><div><i class="bi bi-hourglass-split"></i> ${allSentences.length}</div>`);
+
+    // Zufällige Sentence auswählen
+    const randomSentence = allSentences[Math.floor(Math.random() * allSentences.length)];
+
+    // SENTENCE ANZEIGEN MIT INPUT UND BUTTON
+    $('.video-sentence').html(`
+      <textarea id="sentence-input">${randomSentence ? randomSentence.text : ''}</textarea>
+      <button id="save-sentence" disabled><i class="bi bi-check-circle-fill"></i></button>
+      <div class="training-buttons">
+        <button id="training-good"><i class="bi bi-patch-check-fill"></i> GOOD</button>
+        <button id="training-bad"><i class="bi bi-trash3-fill"></i> BAD</button>
+      </div>
+    `);
+
+    // LOOP UND HIGHLIGHTING FÜR DIE ZUFÄLLIGE SENTENCE
+    if (randomSentence && randomSentence.start !== undefined && randomSentence.end !== undefined) {
+      const $video = $('.video-player video')[0];
+      if ($video) {
+        // Entferne alten Handler
+        if (currentLoopHandler) {
+          $video.removeEventListener('timeupdate', currentLoopHandler);
+        }
+        
+        // Neuer Handler
+        currentLoopHandler = () => {
+          if ($video.currentTime >= randomSentence.end) {
+            $video.currentTime = randomSentence.start;
+          }
+        };
+        
+        $video.addEventListener('timeupdate', currentLoopHandler);
+        
+        // Springe zur Zeit und spiele ab, wenn Video bereit
+        if ($video.readyState >= 2) { // HAVE_CURRENT_DATA
+          $video.currentTime = randomSentence.start;
+          $video.play();
+        } else {
+          $video.addEventListener('canplay', function onCanPlay() {
+            $video.currentTime = randomSentence.start;
+            $video.play();
+            $video.removeEventListener('canplay', onCanPlay);
+          });
+        }
+      }
+    }
+
+    // EVENT FÜR INPUT ÄNDERUNG
+    $('#sentence-input').on('input', function() {
+      const newText = $(this).val().trim();
+      const originalText = randomSentence ? randomSentence.text : '';
+      $('#save-sentence').prop('disabled', newText === originalText);
+    });
+
+    // EVENT FÜR SPEICHERN
+    $('#save-sentence').on('click', async function() {
+      const newText = $('#sentence-input').val().trim();
+      if (newText && newText !== randomSentence.text) {
+        $(this).prop('disabled', true);
+        const newWords = newText.split(' ').filter(word => word);
+        await fetch(`/api/video/update-sentence/${currentVideoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ segmentIndex: randomSentence.segmentIndex, sentenceIndex: randomSentence.sentenceIndex, newText, newWords })
+        });
+      }
+    });
+
+    // EVENT FÜR GOOD
+    $('#training-good').on('click', async function() {
+      await fetch(`/api/video/update-sentence/${currentVideoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex: randomSentence.segmentIndex, sentenceIndex: randomSentence.sentenceIndex, training: true })
+      });
+      updateTrainingSentence();
+    });
+
+    // EVENT FÜR BAD
+    $('#training-bad').on('click', async function() {
+      await fetch(`/api/video/update-sentence/${currentVideoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex: randomSentence.segmentIndex, sentenceIndex: randomSentence.sentenceIndex, training: false })
+      });
+      updateTrainingSentence();
+    });
+
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren der Sentence:', error);
   }
 }
 
@@ -393,6 +555,21 @@ function editSentenceText($span) {
     });
 }
 
+
+// INIT NORMAL VIEW
+function initNormalView() {
+  if (currentVideoId) {
+    loadVideoContent(currentVideoId);
+  }
+}
+
+// INIT TRAINING VIEW
+function initTrainingView() {
+  if (currentVideoId) {
+    loadVideoContentTraining(currentVideoId);
+  } 
+}
+
 // ON LOAD
 $(function() {
 
@@ -417,6 +594,20 @@ $(function() {
   // EDIT SENTENCE TEXT
   $('main').on('dblclick', '.text span', function() { editSentenceText($(this)); });
 
+
+  // VIEW TOGGLE
+  $('#view-toggle').on('click', function() {
+    currentView = currentView === 'normal' ? 'training' : 'normal';
+    if (currentView === 'normal') {
+      initNormalView();
+      $(this).text('TRAINING');
+    } else {
+      initTrainingView();
+      $(this).text('NORMAL');
+    }
+  });
+
+  // INIT NORMAL VIEW ON START
   loadVideos();
   loadTags();
     
