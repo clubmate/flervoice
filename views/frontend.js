@@ -600,10 +600,10 @@ $(function() {
     currentView = currentView === 'normal' ? 'training' : 'normal';
     if (currentView === 'normal') {
       initNormalView();
-      $(this).text('TRAINING');
+      $(this).html('<i class="bi bi-tools"></i>');
     } else {
       initTrainingView();
-      $(this).text('NORMAL');
+      $(this).html('<i class="bi bi-list-ul"></i>');
     }
   });
 
