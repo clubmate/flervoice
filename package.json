@@ -1,5 +1,5 @@
 {
-  "name": "flersucker-web",
+  "name": "flervoice",
   "version": "1.0.0",
   "description": "A Node.js web application using Express and MongoDB for video management",
   "main": "app.js",
