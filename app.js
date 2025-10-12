@@ -18,7 +18,7 @@ app.listen(3001, 'localhost', () => {
 })
 
 // INIT DATABASE
-mongoose.connect('mongodb://127.0.0.1:27017/flersucker');
+mongoose.connect('mongodb://127.0.0.1:27017/flervoice');
 const database = mongoose.connection
 
 database.on('error', (error) => {

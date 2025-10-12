@@ -3,13 +3,14 @@
 A web application for managing and transcribing videos, built with Node.js, Express, MongoDB, and jQuery. It allows users to upload videos with transcriptions, edit speakers, tags, and sentences, search through content, and use a training mode for annotation.
 
 ## Installation
+This guide outlines the steps to install and configure Dopetv on an Ubuntu server. Follow each section carefully to ensure a successful setup.
 
 ### Steps
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/clubmate/flersucker-web.git
-   cd flersucker-web
+   git clone https://github.com/clubmate/flervoice.git
+   cd flervoice
    ```
 
 2. **Install Dependencies**:

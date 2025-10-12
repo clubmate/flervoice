@@ -18,24 +18,6 @@ router.get('/list', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // SHOW SINGLE VIDEO
 router.get('/show/:id', async (req, res) => {
   try {
