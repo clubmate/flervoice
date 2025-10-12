@@ -4,12 +4,6 @@ A web application for managing and transcribing videos, built with Node.js, Expr
 
 ## Installation
 
-### Prerequisites
-
-- Node.js (version 14 or higher)
-- MongoDB (running locally or remotely)
-- npm or yarn
-
 ### Steps
 
 1. **Clone the Repository**:
