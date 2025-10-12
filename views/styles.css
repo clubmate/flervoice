@@ -59,6 +59,8 @@ main .tags { flex: 1; display: flex; flex-direction: column; align-items: end; f
 main .tags .pill { font-size: 12px; }
 main .tags .pill.add { background-color: #2f2f2f; }
 main .tags .speaker { font-size: 14px; background-color: #ab8000; margin-bottom: 10px; font-weight: bold; line-height: 16px; }
+main .tags.no-fler .pill { background-color: #858585; }  
+main .tags.no-fler .tag { display: none; }  
 main .text { flex: 8; }
 main .text span:hover { color: #87aac8; }
 main .text .highlight { color: #72bdff; }

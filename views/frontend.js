@@ -156,7 +156,8 @@ function renderSegment($container, segment, videoId, segmentIndex) {
   $container.attr('data-segment-index', segmentIndex);
   
   // SPEAKER + TAGS
-  $container.append(`<div class="tags"></div>`);
+  const noflerClass = segment.speaker === 'FLER' ? '' : 'no-fler';
+  $container.append(`<div class="tags ${noflerClass}"></div>`);
   $container.find('.tags').append(`<span class="pill speaker">${segment.speaker}</span>`);
   segment.tags.forEach(tag => {
     $container.find('.tags').append(`<span class="pill tag">${tag}</span>`);
