@@ -518,13 +518,7 @@ function splitSegment($span) {
       }).then((result) => {
         if (result.isConfirmed && result.value) {
           const newSpeaker = result.value.trim().toUpperCase();
-          
-          // Spezialfall: Wenn neuer Speaker gleich dem vorherigen ist, nicht splitten
-          if (previousSpeaker && newSpeaker === previousSpeaker) {
-            Swal.fire('Info', 'SAME SPEAKER LIKE SEGMENT BEFORE', 'info');
-            return;
-          }
-          
+                    
           fetch(`/api/video/update-transcription/${videoId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
