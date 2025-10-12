@@ -37,6 +37,9 @@ Set ownership so that both you and the web server can access files properly:
 ```
 sudo chown -R $USER:$USER /var/www/flervoice
 ```
+```
+sudo chown -R www-data:www-data /var/www/flervoice/media
+```
 
 ### Try to start the application
 Start the application to ensure everything works as expected:
@@ -116,7 +119,7 @@ server {
     }
 
     # Increase upload size if needed:
-    client_max_body_size 500M;
+    client_max_body_size 800M;
 }
 ```
 Test your nginx configuration for errors:
@@ -162,7 +165,7 @@ chmod +x /home/boll/backup-flervoice.sh
 ## Updating
 When a new version is available, update your repository and rebuild the application.
 
-## Pull Latest Changes
+### Pull Latest Changes
 Navigate to the repository directory:
 ```
 cd /var/www/flervoice
@@ -177,7 +180,7 @@ sudo git pull origin main
 > [!IMPORTANT]
 > a PAL (Personal Access Token) must be specified as the password. this can be created at https://github.com/settings/tokens
 
-## Restart the Service
+### Restart the Service
 After rebuilding, restart the systemd service:
 ```
 sudo systemctl restart flervoice
