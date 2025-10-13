@@ -291,13 +291,15 @@ async function updateTrainingSentence() {
     let trainingTrue = 0;
     let trainingFalse = 0;
     video.transcription.segments.forEach((segment, segmentIndex) => {
-      segment.sentences.forEach((sentence, sentenceIndex) => {
-        if (sentence.training === true) trainingTrue++;
-        else if (sentence.training === false) trainingFalse++;
-        else if (sentence.training === undefined || sentence.training === null) {
-          allSentences.push({ ...sentence, segmentIndex, sentenceIndex });
-        }
-      });
+      if (segment.speaker === 'FLER') {
+        segment.sentences.forEach((sentence, sentenceIndex) => {
+          if (sentence.training === true) trainingTrue++;
+          else if (sentence.training === false) trainingFalse++;
+          else if (sentence.training === undefined || sentence.training === null) {
+            allSentences.push({ ...sentence, segmentIndex, sentenceIndex });
+          }
+        });
+      }
     });
 
     // Anzahl anzeigen
