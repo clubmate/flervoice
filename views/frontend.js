@@ -553,7 +553,22 @@ function splitSegment($span) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ segmentIndex, sentenceIndex, newSpeaker })
           }).then(() => {
-            loadVideoContent(videoId);
+            // Lade neu und springe zum Anfang des neuen Segments
+            loadVideoContent(videoId).then(() => {
+              const $newVideo = $('main video')[0];
+              if ($newVideo) {
+                // Neues Segment ist bei segmentIndex + 1
+                const $newSegment = $('main [data-segment-index="' + (segmentIndex + 1) + '"]');
+                if ($newSegment.length > 0) {
+                  const $firstSpan = $newSegment.find('.text span').first();
+                  const startTime = parseFloat($firstSpan.data('start'));
+                  if (!isNaN(startTime)) {
+                    $newVideo.currentTime = startTime;
+                    $newVideo.play();
+                  }
+                }
+              }
+            });
           });
         }
       });
