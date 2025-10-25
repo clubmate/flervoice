@@ -485,17 +485,13 @@ function editSegmentTags($pill) {
     cancelButtonText: 'CANCEL'
   }).then(async (result) => {
     if (result.isConfirmed && result.value !== null) {
-      const newTags = result.value.split(',').map(tag => tag.trim().toUpperCase()).filter(tag => tag);
+      let newTags = result.value.split(',').map(tag => tag.trim().toUpperCase()).filter(tag => tag);
+      // DUPLIKATE ENTFERNEN UND SCHON VORHANDENE AUSSCHLIESSEN
+      const oldTags = $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get();
+      newTags = [...new Set(newTags)]; // Duplikate entfernen
+      newTags = newTags.filter(tag => !oldTags.includes(tag)); // Schon vorhandene ausschließen
       
       // Update Tags
-      const oldTags = $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get();
-      for (const oldTag of oldTags) {
-        await fetch(`/api/video/update-tag/${videoId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ segmentIndex, oldTag, deleteTag: true })
-        });
-      }
       for (const newTag of newTags) {
         await fetch(`/api/video/add-tag/${videoId}`, {
           method: 'PUT',
@@ -504,7 +500,25 @@ function editSegmentTags($pill) {
         });
       }
       
-      loadVideoContent(videoId);
+      // LOKAL AKTUALISIEREN OHNE NEULADEN
+      newTags.forEach(tag => {
+        $tagsContainer.append(`<span class="pill tag">${tag}</span>`);
+      });
+      // TOP-TAGS NEU LADEN
+      const $section = $container.parents('section').eq(0); 
+      const $topTags = $section.find('.top-tags');
+      if ($topTags.length > 0) {
+        $topTags.empty();
+        fetch('/api/video/top-tags')
+          .then(response => response.json())
+          .then(topTags => {
+            topTags.forEach(tag => {
+              $topTags.append(`<span class="pill top-tag">${tag}</span>`);
+            });
+          });
+      }
+      // Sidebar neu laden
+      loadTags();
     }
   });
 }
@@ -805,6 +819,12 @@ function addTopTagToCurrentSegment($pill) {
       return false;
     });
     if ($container.length > 0) {
+      const $tagsContainer = $container.find('.tags');
+      const existingTags = $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get();
+      if (existingTags.includes(tag)) {
+        // Tag schon vorhanden, nichts tun
+        return;
+      }
       const videoId = $container.data('video-id');
       const segmentIndex = $container.data('segment-index');
       // Tag hinzufügen
@@ -813,7 +833,24 @@ function addTopTagToCurrentSegment($pill) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ segmentIndex, newTag: tag })
       }).then(() => {
-        loadVideoContent(videoId);
+        // LOKAL HINZUFÜGEN OHNE NEULADEN
+        $tagsContainer.find('.add').remove(); // Entferne "ADD TAGS" wenn vorhanden
+        $tagsContainer.append(`<span class="pill tag">${tag}</span>`);
+        // TOP-TAGS NEU LADEN
+        const $topTags = $section.find('.top-tags');
+        if ($topTags.length > 0) {
+          console.log('Reloading top tags...');
+          $topTags.empty();
+          fetch('/api/video/top-tags')
+            .then(response => response.json())
+            .then(topTags => {
+              topTags.forEach(tag => {
+                $topTags.append(`<span class="pill top-tag">${tag}</span>`);
+              });
+            });
+        }
+        // Sidebar neu laden
+        loadTags();
       });
     }
   }
