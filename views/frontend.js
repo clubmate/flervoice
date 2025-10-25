@@ -200,8 +200,20 @@ async function loadVideoContent(videoId) {
           <strong>${video.title}</strong>
           <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
         </div>
+        <div class="top-tags"></div>
       </div>
     `);
+
+    // TOP TAGS
+    const $topTags = $group.find('.top-tags');
+    // Lade Top-Tags
+    fetch('/api/video/top-tags')
+      .then(response => response.json())
+      .then(topTags => {
+        topTags.forEach(tag => {
+          $topTags.append(`<span class="pill top-tag">${tag}</span>`);
+        });
+      });
 
     // TEXT HIGHLIGHTING FOR VIDEO
     const $video = $group.find('video')[0];
@@ -773,6 +785,39 @@ async function loadSegmentsBySearch(query) {
   }
 }
 
+// ADD TOP TAG TO CURRENT SEGMENT
+function addTopTagToCurrentSegment($pill) {
+  const tag = $pill.text();
+  const $section = $pill.closest('section');
+  const $video = $section.find('video')[0];
+  if ($video) {
+    const currentTime = $video.currentTime;
+    // Finde das Segment basierend auf currentTime
+    const $container = $section.find('[data-video-id]').filter(function() {
+      const $spans = $(this).find('.text span');
+      for (let i = 0; i < $spans.length; i++) {
+        const start = parseFloat($spans.eq(i).data('start'));
+        const end = parseFloat($spans.eq(i).data('end'));
+        if (currentTime >= start && currentTime < end) {
+          return true;
+        }
+      }
+      return false;
+    });
+    if ($container.length > 0) {
+      const videoId = $container.data('video-id');
+      const segmentIndex = $container.data('segment-index');
+      // Tag hinzufügen
+      fetch(`/api/video/add-tag/${videoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segmentIndex, newTag: tag })
+      }).then(() => {
+        loadVideoContent(videoId);
+      });
+    }
+  }
+}
 
 // INIT NORMAL VIEW
 function initNormalView() {
@@ -836,6 +881,9 @@ $(function() {
       $(this).html('<i class="bi bi-list-ul"></i>');
     }
   });
+
+  // ADD TAG TO CURRENT SEGMENT
+  $('main').on('click', '.top-tag', function() { addTopTagToCurrentSegment($(this)); });
 
   // INIT NORMAL VIEW ON START
   loadVideos();

@@ -416,4 +416,30 @@ router.post('/upload', upload.fields([{ name: 'mp4', maxCount: 1 }, { name: 'jso
   }
 });
 
+// GET TOP 20 MOST USED TAGS
+router.get('/top-tags', async (req, res) => {
+  try {
+    const videos = await video.find({}, 'transcription.segments.tags');
+    const tagCount = {};
+    
+    videos.forEach(video => {
+      video.transcription.segments.forEach(segment => {
+        segment.tags.forEach(tag => {
+          tagCount[tag] = (tagCount[tag] || 0) + 1;
+        });
+      });
+    });
+    
+    const topTags = Object.entries(tagCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([tag]) => tag);
+    
+    res.status(200).json(topTags);
+  } catch (error) {
+    console.log(`Error in /top-tags: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
