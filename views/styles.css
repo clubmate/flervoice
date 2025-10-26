@@ -56,6 +56,7 @@ main .video-info { display: flex; flex-direction: column; gap: 10px; position: s
 main .video-tags { display: flex; gap: 5px; }
 main .top-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 40px; }
 main .top-tags .pill.top-tag { font-size: 16px; background-color: #858585; }
+main .top-tags .pill.top-tag.active { background-color: #007bff; pointer-events: none; }
 main .top-tags .pill.top-tag:hover { background-color: #007bff; }
 main .video-segment { flex: 2; display: flex; flex-direction: column; gap: 30px; }
 main .tags { position: sticky; top: 0px; flex: 1; display: flex; flex-direction: column; align-items: end; flex-wrap: wrap; gap: 10px; height: min-content; padding-top: 8px; padding-bottom: 8px; }

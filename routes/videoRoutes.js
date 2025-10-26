@@ -141,7 +141,11 @@ router.put('/update-sentence/:id', async (req, res) => {
 router.put('/update-video-tags/:id', async (req, res) => {
   try {
     const { videoTags } = req.body;
-    await video.findByIdAndUpdate(req.params.id, { videoTags });
+    const upperTags = videoTags.map(tag => tag.toUpperCase()); // UPPERCASE STELLEN
+    const videoData = await video.findByIdAndUpdate(req.params.id, { videoTags: upperTags }, { new: true });
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
     res.status(200).json({ message: 'Video-Tags aktualisiert' });
   } catch (error) {
     console.log(`Error in /update-video-tags/:id: ${error.message}`);
@@ -171,6 +175,29 @@ router.get('/tags', async (req, res) => {
     res.status(200).json(sortedTags);
   } catch (error) {
     console.log(`Error in /tags: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET ALL TAGS
+router.get('/all-tags', async (req, res) => {
+  try {
+    const videos = await video.find({}, 'transcription.segments.tags');
+    const tagCount = {};
+    
+    videos.forEach(video => {
+      video.transcription.segments.forEach(segment => {
+        segment.tags.forEach(tag => {
+          tagCount[tag] = (tagCount[tag] || 0) + 1;
+        });
+      });
+    });
+    
+    const allTags = Object.keys(tagCount).sort((a, b) => tagCount[b] - tagCount[a]);
+    
+    res.status(200).json(allTags);
+  } catch (error) {
+    console.log(`Error in /all-tags: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 });

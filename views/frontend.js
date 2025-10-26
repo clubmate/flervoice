@@ -206,11 +206,10 @@ async function loadVideoContent(videoId) {
 
     // TOP TAGS
     const $topTags = $group.find('.top-tags');
-    // Lade Top-Tags
-    fetch('/api/video/top-tags')
+    fetch('/api/video/all-tags')
       .then(response => response.json())
-      .then(topTags => {
-        topTags.forEach(tag => {
+      .then(allTags => {
+        allTags.forEach(tag => {
           $topTags.append(`<span class="pill top-tag">${tag}</span>`);
         });
       });
@@ -218,6 +217,33 @@ async function loadVideoContent(videoId) {
     // TEXT HIGHLIGHTING FOR VIDEO
     const $video = $group.find('video')[0];
     if ($video) {
+
+   // Funktion zum Aktualisieren der Tag-Klassen
+      function updateTopTagClasses() {
+        const currentTime = $video.currentTime;
+        const $container = $group.find('[data-video-id]').filter(function() {
+          const $spans = $(this).find('.text span');
+          for (let i = 0; i < $spans.length; i++) {
+            const start = parseFloat($spans.eq(i).data('start'));
+            const end = parseFloat($spans.eq(i).data('end'));
+            if (currentTime >= start && currentTime < end) {
+              return true;
+            }
+          }
+          return false;
+        });
+        if ($container.length > 0) {
+          const segmentTags = $container.find('.pill.tag').map(function() { return $(this).data('tag'); }).get();
+          $topTags.find('.pill.top-tag').removeClass('active');
+          $topTags.find('.pill.top-tag').each(function() {
+            const tag = $(this).text();
+            if (segmentTags.includes(tag)) {
+              $(this).addClass('active');
+            }
+          });
+        }
+      }
+
       $video.addEventListener('timeupdate', function() {
         const currentTime = this.currentTime;
         $group.find('.text span').removeClass('highlight');
@@ -229,6 +255,10 @@ async function loadVideoContent(videoId) {
             $(this).addClass('highlight');
           }
         });
+
+        // TOP-TAGS AKTUALISIEREN
+        updateTopTagClasses();
+
       });
     }
     
