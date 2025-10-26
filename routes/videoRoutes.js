@@ -452,6 +452,12 @@ router.post('/upload', upload.fields([{ name: 'mp4', maxCount: 1 }, { name: 'jso
     const jsonFile = req.files.json[0];
     const jsonData = JSON.parse(fs.readFileSync(jsonFile.path, 'utf8'));
 
+    // Prüfen, ob Video mit dieser ID schon existiert
+    const existingVideo = await video.findOne({ videoId: jsonData.video_id });
+    if (existingVideo) {
+      return res.status(400).json({ message: 'Video mit dieser ID existiert schon' });
+    }
+
     const newVideo = new video({ 
       title: jsonData.title,
       description: jsonData.description,
@@ -467,7 +473,7 @@ router.post('/upload', upload.fields([{ name: 'mp4', maxCount: 1 }, { name: 'jso
     await newVideo.save();
 
     // SEND RESPONSE  
-    //res.json(videoData)
+    res.status(200).json({ message: 'Video erfolgreich hochgeladen' });
   }
   catch (error) {
     console.log(`Error in /video/upload: ${error.message}`);

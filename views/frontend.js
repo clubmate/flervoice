@@ -133,7 +133,7 @@ function uploadVideo() {
       formData.append('mp4', result.value.mp4);
       formData.append('json', result.value.json);
       
-      fetch('/api/video/upload', {
+  fetch('/api/video/upload', {
         method: 'POST',
         body: formData
       }).then(response => {
@@ -141,7 +141,11 @@ function uploadVideo() {
           Swal.fire('Erfolg', 'Dateien erfolgreich hochgeladen!', 'success');
           loadVideos(); // Liste neu laden
         } else {
-          Swal.fire('Fehler', 'Upload fehlgeschlagen: ' + response.statusText, 'error');
+          response.json().then(data => {
+            Swal.fire('Fehler', data.message, 'error');
+          }).catch(() => {
+            Swal.fire('Fehler', 'Upload fehlgeschlagen: ' + response.statusText, 'error');
+          });
         }
       }).catch(error => {
         Swal.fire('Fehler', 'Netzwerkfehler: ' + error.message, 'error');
