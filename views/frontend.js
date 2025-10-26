@@ -199,8 +199,8 @@ async function loadVideoContent(videoId) {
           </video>
           <strong>${video.title}</strong>
           <div class="video-tags">${video.videoTags ? video.videoTags.map(tag => `<span class="pill">${tag}</span>`).join('') : ''}</div>
+          <div class="top-tags"></div>
         </div>
-        <div class="top-tags"></div>
       </div>
     `);
 
@@ -530,24 +530,22 @@ function splitSegment($span) {
   const segmentIndex = $container.data('segment-index');
   const sentenceIndex = $span.index();
   
-  // Hole die Transcription, um den vorherigen Speaker zu prüfen
+  // Hole die Transcription, um den aktuellen Speaker zu prüfen
   fetch(`/api/video/show/${videoId}`)
     .then(response => response.json())
     .then(video => {
       const segments = video.transcription.segments;
-      const previousSpeaker = segmentIndex > 0 ? segments[segmentIndex - 1].speaker : null;
+      const currentSpeaker = segments[segmentIndex].speaker;
+      const newSpeaker = currentSpeaker === 'FLER' ? 'INTERVIEWER' : 'FLER';
       
       Swal.fire({
         title: 'SPLIT SEGMENT',
-        input: 'text',
-        inputPlaceholder: 'SPEAKER',
+        text: `NEW SEGMENT: ${newSpeaker}`,
         showCancelButton: true,
-        confirmButtonText: 'SAVE',
+        confirmButtonText: 'SPLIT',
         cancelButtonText: 'CANCEL'
       }).then((result) => {
-        if (result.isConfirmed && result.value) {
-          const newSpeaker = result.value.trim().toUpperCase();
-                    
+        if (result.isConfirmed) {
           fetch(`/api/video/update-transcription/${videoId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },

@@ -51,6 +51,11 @@ router.put('/update-transcription/:id', async (req, res) => {
       return res.status(400).json({ message: 'Ungültiger Sentence-Index' });
     }
     
+    // Prüfe, ob newSpeaker gleich dem aktuellen Speaker ist
+    if (newSpeaker === segment.speaker) {
+      return res.status(400).json({ message: 'Speaker ist gleich dem aktuellen Segment, Splitting nicht nötig' });
+    }
+    
     // Split the sentences
     const beforeSentences = segment.sentences.slice(0, sentenceIndex);
     const afterSentences = segment.sentences.slice(sentenceIndex);
@@ -58,10 +63,10 @@ router.put('/update-transcription/:id', async (req, res) => {
     // Update the current segment with before sentences
     segment.sentences = beforeSentences;
     
-    // Create new segment with after sentences, new speaker, and no tags
+    // Create new segment with after sentences, new speaker, and copied tags
     const newSegment = {
       speaker: newSpeaker,
-      tags: [], // Keine Tags für das neue Segment
+      tags: segment.tags, // Tags vom alten Segment übernehmen
       sentences: afterSentences
     };
     
