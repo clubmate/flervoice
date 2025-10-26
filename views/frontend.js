@@ -160,7 +160,7 @@ function renderSegment($container, segment, videoId, segmentIndex) {
   $container.append(`<div class="tags ${noflerClass}"></div>`);
   $container.find('.tags').append(`<span class="pill speaker">${segment.speaker}</span>`);
   segment.tags.forEach(tag => {
-    $container.find('.tags').append(`<span class="pill tag">${tag}</span>`);
+    $container.find('.tags').append(`<span class="pill tag" data-tag="${tag}">${tag} <i class="bi bi-x-circle-fill remove-tag" data-tag="${tag}"></i></span>`);
   });
   if (segment.tags.length === 0) {
     $container.find('.tags').append(`<span class="pill tag add">ADD TAGS</span>`);
@@ -473,7 +473,7 @@ function editSegmentTags($pill) {
   const segmentIndex = $container.data('segment-index');
   const $tagsContainer = $container.find('.tags');
   const isAddTags = $pill.text() === 'ADD TAGS';
-  const currentTags = isAddTags ? '' : $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get().filter(tag => tag !== 'ADD TAGS').join(', ');
+  const currentTags = isAddTags ? '' : $tagsContainer.find('.pill.tag').map(function() { return $(this).data('tag'); }).get().join(', ');
   
   Swal.fire({
     title: 'EDIT TAGS',
@@ -487,7 +487,7 @@ function editSegmentTags($pill) {
     if (result.isConfirmed && result.value !== null) {
       let newTags = result.value.split(',').map(tag => tag.trim().toUpperCase()).filter(tag => tag);
       // DUPLIKATE ENTFERNEN UND SCHON VORHANDENE AUSSCHLIESSEN
-      const oldTags = $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get();
+      const oldTags = $tagsContainer.find('.pill.tag').map(function() { return $(this).data('tag'); }).get();
       newTags = [...new Set(newTags)]; // Duplikate entfernen
       newTags = newTags.filter(tag => !oldTags.includes(tag)); // Schon vorhandene ausschließen
       
@@ -502,7 +502,7 @@ function editSegmentTags($pill) {
       
       // LOKAL AKTUALISIEREN OHNE NEULADEN
       newTags.forEach(tag => {
-        $tagsContainer.append(`<span class="pill tag">${tag}</span>`);
+        $tagsContainer.append(`<span class="pill tag" data-tag="${tag}">${tag} <i class="bi bi-x-circle-fill remove-tag" data-tag="${tag}"></i></span>`);
       });
       // TOP-TAGS NEU LADEN
       const $section = $container.parents('section').eq(0); 
@@ -835,7 +835,7 @@ function addTopTagToCurrentSegment($pill) {
     });
     if ($container.length > 0) {
       const $tagsContainer = $container.find('.tags');
-      const existingTags = $tagsContainer.find('.pill:not(.speaker)').map(function() { return $(this).text(); }).get();
+      const existingTags = $tagsContainer.find('.pill.tag').map(function() { return $(this).data('tag'); }).get();
       if (existingTags.includes(tag)) {
         // Tag schon vorhanden, nichts tun
         return;
@@ -850,7 +850,7 @@ function addTopTagToCurrentSegment($pill) {
       }).then(() => {
         // LOKAL HINZUFÜGEN OHNE NEULADEN
         $tagsContainer.find('.add').remove(); // Entferne "ADD TAGS" wenn vorhanden
-        $tagsContainer.append(`<span class="pill tag">${tag}</span>`);
+        $tagsContainer.append(`<span class="pill tag" data-tag="${tag}">${tag} <i class="bi bi-x-circle-fill remove-tag" data-tag="${tag}"></i></span>`);
         // TOP-TAGS NEU LADEN
         const $topTags = $section.find('.top-tags');
         if ($topTags.length > 0) {
@@ -869,6 +869,43 @@ function addTopTagToCurrentSegment($pill) {
       });
     }
   }
+}
+
+// REMOVE TAG FROM SEGMENT
+function removeTagFromSegment($icon) {
+  const tag = $icon.data('tag');
+  const $container = $icon.closest('[data-video-id]');
+  const videoId = $container.data('video-id');
+  const segmentIndex = $container.data('segment-index');
+  
+  fetch(`/api/video/remove-tag/${videoId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ segmentIndex, tagToRemove: tag })
+  }).then(() => {
+    // LOKAL ENTFERNEN
+    $icon.closest('.pill').remove();
+    // Wenn keine Tags mehr, "ADD TAGS" hinzufügen
+    const $tagsContainer = $container.find('.tags');
+    if ($tagsContainer.find('.pill.tag').length === 0) {
+      $tagsContainer.append(`<span class="pill tag add">ADD TAGS</span>`);
+    }
+    // TOP-TAGS NEU LADEN
+    const $section = $container.parents('section').eq(0);
+    const $topTags = $section.find('.top-tags');
+    if ($topTags.length > 0) {
+      $topTags.empty();
+      fetch('/api/video/top-tags')
+        .then(response => response.json())
+        .then(topTags => {
+          topTags.forEach(tag => {
+            $topTags.append(`<span class="pill top-tag">${tag}</span>`);
+          });
+        });
+    }
+    // Sidebar neu laden
+    loadTags();
+  });
 }
 
 // INIT NORMAL VIEW
@@ -899,6 +936,9 @@ $(function() {
 
   // EDIT SEGMENT TAGS
   $('main').on('click', '.pill.tag', function() { editSegmentTags($(this)); });
+
+  // REMOVE TAG FROM SEGMENT
+  $('main').on('click', '.remove-tag', function(e) { e.stopPropagation(); removeTagFromSegment($(this)); });
 
   // JUMP TO SENTENCE TIME
   $('main').on('click', '.text span', function() { jumpToSentenceTime($(this)); });

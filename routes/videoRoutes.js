@@ -236,6 +236,33 @@ router.put('/update-tag/:id', async (req, res) => {
   }
 });
 
+// REMOVE TAG FROM SEGMENT
+router.put('/remove-tag/:id', async (req, res) => {
+  try {
+    const { segmentIndex, tagToRemove } = req.body;
+    
+    const videoData = await video.findById(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    
+    const segments = videoData.transcription.segments;
+    if (segmentIndex >= segments.length) {
+      return res.status(400).json({ message: 'Ungültiger Segment-Index' });
+    }
+    
+    const segment = segments[segmentIndex];
+    segment.tags = segment.tags.filter(tag => tag !== tagToRemove);
+    
+    await video.findByIdAndUpdate(req.params.id, { 'transcription.segments': segments });
+    
+    res.status(200).json({ message: 'Tag entfernt' });
+  } catch (error) {
+    console.log(`Error in /remove-tag/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // UPDATE SPEAKER FOR A SEGMENT
 router.put('/update-speaker/:id', async (req, res) => {
   try {

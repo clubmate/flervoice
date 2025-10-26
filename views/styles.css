@@ -59,6 +59,8 @@ main .top-tags .pill.top-tag { font-size: 16px; }
 main .video-segment { flex: 3; display: flex; flex-direction: column; gap: 30px; }
 main .tags { position: sticky; top: 0px; flex: 1; display: flex; flex-direction: column; align-items: end; flex-wrap: wrap; gap: 10px; height: min-content; padding-top: 8px; padding-bottom: 8px; }
 main .tags .pill { font-size: 12px; }
+main .tags .pill .remove-tag { margin-right: -2px; }
+main .tags .pill .remove-tag:hover { color: #ffd200; }
 main .tags .pill.add { background-color: #2f2f2f; }
 main .tags .speaker { font-size: 14px; background-color: #ab8000; margin-bottom: 10px; font-weight: bold; line-height: 16px; }
 main .tags.no-fler .pill { background-color: #858585; }  
@@ -83,4 +85,4 @@ main section.training .video-sentence .training-buttons button:hover { color: #f
 main section.training .video-sentence .training-buttons #training-good { background-color: #007bff; }
 main section.training .video-sentence .training-buttons #training-bad { background-color: #2f2f2f; }
 
-.pill { cursor: pointer; background-color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 10px; width: fit-content; }
+.pill { display: flex; align-items: center; gap: 5px; cursor: pointer; background-color: #007bff; font-size: 10px; padding: 2px 6px; border-radius: 10px; width: fit-content; }
