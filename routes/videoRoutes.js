@@ -507,4 +507,25 @@ router.get('/top-tags', async (req, res) => {
   }
 });
 
+// DELETE VIDEO
+router.delete('/delete/:id', async (req, res) => {
+  try {
+    const videoData = await video.findByIdAndDelete(req.params.id);
+    if (!videoData) {
+      return res.status(404).json({ message: 'Video nicht gefunden' });
+    }
+    // Datei löschen
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.join(__dirname, '../media', videoData.filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    res.status(200).json({ message: 'Video gelöscht' });
+  } catch (error) {
+    console.log(`Error in /delete/:id: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

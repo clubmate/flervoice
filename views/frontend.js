@@ -454,8 +454,10 @@ function editVideoTitle($title) {
     inputValue: currentTitle,
     inputPlaceholder: 'NEW TITLE',
     showCancelButton: true,
+    showDenyButton: true,
     confirmButtonText: 'SAVE',
-    cancelButtonText: 'CANCEL'
+    cancelButtonText: 'CANCEL',
+    denyButtonText: 'DELETE'
   }).then(async (result) => {
     if (result.isConfirmed && result.value && result.value !== currentTitle) {
       const newTitle = result.value.trim();
@@ -465,6 +467,23 @@ function editVideoTitle($title) {
         body: JSON.stringify({ newTitle })
       });
       loadVideos(); // Liste neu laden
+    } else if (result.isDenied) {
+      // Bestätigung für Löschen
+      Swal.fire({
+        title: 'DELETE VIDEO?',
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'DELETE'
+      }).then(async (confirmResult) => {
+        if (confirmResult.isConfirmed) {
+          await fetch(`/api/video/delete/${videoId}`, {
+            method: 'DELETE'
+          });
+          loadVideos(); // Liste neu laden
+        }
+      });
     }
   });
 }
